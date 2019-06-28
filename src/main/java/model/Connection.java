@@ -68,6 +68,31 @@ public class Connection {
         return false;
     }
 
+    public List<Conversation> getList (MessageType messageType) {
+        List<Conversation> list = null;
+        try {
+            out.writeObject(new ServerMessage(messageType, new User(username, "")));
+            out.flush();
+            list = (List<Conversation>) in.readObject();
+            terminate();
+        }
+        catch (IOException | ClassNotFoundException e) {
+            e.getMessage();
+        }
+        return list;
+    }
+
+    public void sendMail(Email email) {
+        try {
+            out.writeObject(email);
+            out.flush();
+            terminate();
+        }
+        catch (IOException e) {
+            e.getMessage();
+        }
+    }
+
     private void terminate() throws IOException {
         in.close();
         out.close();

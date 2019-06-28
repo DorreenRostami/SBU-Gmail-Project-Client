@@ -20,7 +20,6 @@ public class User implements Serializable, Person {
 
     //messaging info
     private List<User> blockedUsers = null;
-    private List<Email> messages = new ArrayList<>();
 
     public User(String username, String password) {
         this.username = username;
@@ -119,5 +118,13 @@ public class User implements Serializable, Person {
     @Override
     public int hashCode() {
         return username.hashCode();
+    }
+
+    public List<Conversation> getInbox(){
+        return new Connection(username).getList(MessageType.inbox);
+    }
+
+    public List<Conversation> getSent() {
+        return new Connection(username).getList(MessageType.sent);
     }
 }

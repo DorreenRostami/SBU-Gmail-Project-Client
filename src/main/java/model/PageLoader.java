@@ -12,8 +12,8 @@ import java.net.URL;
 import java.nio.file.Paths;
 
 public class PageLoader {
-    private static final int WIDTH = 600;
-    private static final int HEIGHT = 600;
+    private static final int WIDTH = 900;
+    private static final int HEIGHT = 700;
     private static Stage mainStage;
 
     public static void initStage(Stage stage) {
@@ -21,7 +21,7 @@ public class PageLoader {
         mainStage.setTitle("Google Mail");
         mainStage.setResizable(true);
         mainStage.initStyle(StageStyle.DECORATED);
-        mainStage.getIcons().add(new Image(Paths.get("src/main/resources/images/icon.png").toUri().toString()));
+        mainStage.getIcons().add(new Image(Paths.get("resources/images/icon.png").toUri().toString()));
     }
 
     public void load(String url) throws IOException {

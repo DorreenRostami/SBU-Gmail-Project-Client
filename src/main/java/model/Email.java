@@ -7,16 +7,14 @@ import java.util.Date;
 public class Email extends Message implements Serializable {
     private static final long serialVersionUID = 2L;
 
-    private String sender;
     private String receiver;
     private String time;
     private String subject = "No Subject";
-    private String text;
     private byte[] fileBytes;
     private boolean read = false;
+    private boolean imp = false;
 
-    public Email(MessageType messageType, String sender, String receiver, String subject, String text, byte[] fileBytes) {
-        this.messageType = messageType;
+    public Email(User sender, String receiver, String subject, String text, byte[] fileBytes) {
         this.sender = sender;
         this.text = text;
         this.receiver = receiver;
@@ -25,10 +23,6 @@ public class Email extends Message implements Serializable {
         if (fileBytes.length > 0)
             this.fileBytes = fileBytes;
         this.time = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date());
-    }
-
-    public String getSender() {
-        return sender;
     }
 
     public String getReceiver() {
@@ -43,10 +37,6 @@ public class Email extends Message implements Serializable {
         return subject;
     }
 
-    public String getText() {
-        return text;
-    }
-
     public byte[] getFileBytes() {
         return fileBytes;
     }
@@ -57,5 +47,26 @@ public class Email extends Message implements Serializable {
 
     public void setRead(boolean read) {
         this.read = read;
+    }
+
+    public boolean isImp() {
+        return imp;
+    }
+
+    public void setImp(boolean imp) {
+        this.imp = imp;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Email e = (Email) o;
+        return sender.equals(e.getSender()) && subject.equals(e.getSubject());
+    }
+
+    @Override
+    public int hashCode() {
+        return subject.hashCode() + sender.hashCode();
     }
 }

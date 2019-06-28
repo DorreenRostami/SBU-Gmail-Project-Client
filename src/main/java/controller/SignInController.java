@@ -24,12 +24,12 @@ public class SignInController {
             boolean signedIn = c.signInConnection(passwordTextField.getText());
             if (signedIn) {
                 wrongLabel.setVisible(false);
-                new PageLoader().load("/view/Emails.fxml");
+                new PageLoader().load("/Emails.fxml");
             }
             else
                 wrongLabel.setVisible(true);
         }
         else if (actionEvent.getSource() == newAccountHyperlink)
-            new PageLoader().load("/view/newAccount.fxml");
+            new PageLoader().load("/newAccount.fxml");
     }
 }

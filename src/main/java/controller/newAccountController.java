@@ -24,7 +24,7 @@ public class newAccountController {
 
     public void changePage(ActionEvent actionEvent) throws IOException, ParseException {
         if (actionEvent.getSource() == backButton)
-            new PageLoader().load("/view/SignIn.fxml");
+            new PageLoader().load("/SignIn.fxml");
         else if (actionEvent.getSource() == nextButton) {
             resetWarnings();
 
@@ -38,7 +38,7 @@ public class newAccountController {
             //check if user is signed up or not (and why they aren't)
             if (feedback.contains(SignUpFeedback.signedUp)) {
                 currentUser.user = user;
-                new PageLoader().load("/view/SignUpImageChooser.fxml");
+                new PageLoader().load("/AdditionalInfo.fxml");
             }
             else {
                 if (feedback.contains(SignUpFeedback.fullName))

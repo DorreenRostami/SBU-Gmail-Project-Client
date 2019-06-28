@@ -5,7 +5,7 @@ import model.Email;
 
 import java.io.IOException;
 
-public class ConvoListItem extends ListCell<Email> {
+public class MessageListItem extends ListCell<Email> {
     @Override
     public void updateItem(Email email, boolean empty) {
         super.updateItem(email, empty);
@@ -13,7 +13,7 @@ public class ConvoListItem extends ListCell<Email> {
             setStyle("-fx-background-color: #adb4bc");
             /*try {
                 setGraphic
-                        (new ConvoListItemController(email).init());
+                        (new MessageListItemController(email).init());
             } catch (IOException e) {
                 e.printStackTrace();
             }*/
