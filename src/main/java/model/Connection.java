@@ -14,15 +14,11 @@ public class Connection {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    public Connection(String username) {
+    public Connection(String username) throws IOException {
         this.username = username;
-        try {
-            socket = new Socket(serverIP, requestPort);
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
-        } catch (IOException e) {
-            e.getMessage();
-        }
+        socket = new Socket(serverIP, requestPort);
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
     }
 
     public void signUpConnection(User user) {
@@ -82,15 +78,25 @@ public class Connection {
         return list;
     }
 
-    public void sendMail(Email email) {
+    /**
+     * sends the conversation which contains the new email to the server.
+     * @param conversation the conversation containing the new email
+     * @return returns a conversation only containing an error email from the
+     * Mail Delivery Subsystem if the receiver of the new mail didn't exist,
+     * else returns the same conversation if the receiver existed.
+     */
+    public Conversation sendMail(Conversation conversation) {
+        Conversation conv = null;
         try {
-            out.writeObject(email);
+            out.writeObject(conversation);
             out.flush();
+            conv = (Conversation) in.readObject();
             terminate();
         }
-        catch (IOException e) {
+        catch (IOException | ClassNotFoundException e) {
             e.getMessage();
         }
+        return conv;
     }
 
     private void terminate() throws IOException {

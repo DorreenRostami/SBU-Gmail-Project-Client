@@ -3,6 +3,7 @@ package model;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class Email extends Message implements Serializable {
     private static final long serialVersionUID = 2L;
@@ -10,17 +11,17 @@ public class Email extends Message implements Serializable {
     private String receiver;
     private String time;
     private String subject = "No Subject";
-    private byte[] fileBytes;
+    private List<byte[]> fileBytes;
     private boolean read = false;
     private boolean imp = false;
 
-    public Email(User sender, String receiver, String subject, String text, byte[] fileBytes) {
+    public Email(User sender, String receiver, String subject, String text, List<byte[]> fileBytes) {
         this.sender = sender;
         this.text = text;
         this.receiver = receiver;
         if (subject.length() > 0)
             this.subject = subject;
-        if (fileBytes.length > 0)
+        if (fileBytes != null)
             this.fileBytes = fileBytes;
         this.time = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date());
     }
@@ -37,7 +38,7 @@ public class Email extends Message implements Serializable {
         return subject;
     }
 
-    public byte[] getFileBytes() {
+    public List<byte[]> getFileBytes() {
         return fileBytes;
     }
 
@@ -57,16 +58,23 @@ public class Email extends Message implements Serializable {
         this.imp = imp;
     }
 
+    /**
+     * equals method to check if two emails are equal.
+     * since a user can't sendComposed two emails at the exact same time checking
+     * the equivalence of the time and sender of two emails will be sufficient.
+     * @param o another object which will be either equal or not to this email
+     * @return true if the sender of time of sending the two emails are the same
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Email e = (Email) o;
-        return sender.equals(e.getSender()) && subject.equals(e.getSubject());
+        return time.equals(e.getTime()) && sender.equals(e.getSender());
     }
 
     @Override
     public int hashCode() {
-        return subject.hashCode() + sender.hashCode();
+        return time.hashCode() + sender.hashCode();
     }
 }

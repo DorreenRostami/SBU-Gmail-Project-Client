@@ -33,9 +33,9 @@ public class AdditionalInfoController {
 
     public void openFileChooser() throws IOException {
         FileChooser fc = new FileChooser();
+        fc.setTitle("Choose a profile picture");
         fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("png", "*.png"),
-                new FileChooser.ExtensionFilter("jpg", "*.jpg"));
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
         File selectedFile = fc.showOpenDialog(null);
         if (selectedFile != null) {
             //turn chosen image into a byte array
@@ -67,7 +67,12 @@ public class AdditionalInfoController {
         Task<Void> makeAccountTask = new Task<>() {
             @Override
             protected Void call() {
-                new Connection(currentUser.user.getUsername()).signUpConnection(currentUser.user);
+                try {
+                    new Connection(currentUser.user.getUsername()).signUpConnection(currentUser.user);
+                }
+                catch (IOException e) {
+                    System.out.println("Server Error");
+                }
                 return null;
             }
         };

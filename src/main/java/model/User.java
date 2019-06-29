@@ -1,5 +1,6 @@
 package model;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -120,11 +121,11 @@ public class User implements Serializable, Person {
         return username.hashCode();
     }
 
-    public List<Conversation> getInbox(){
+    public List<Conversation> getInbox() throws IOException {
         return new Connection(username).getList(MessageType.inbox);
     }
 
-    public List<Conversation> getSent() {
+    public List<Conversation> getSent() throws IOException {
         return new Connection(username).getList(MessageType.sent);
     }
 }

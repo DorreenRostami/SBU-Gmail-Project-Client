@@ -11,12 +11,12 @@ public class MessageListItem extends ListCell<Email> {
         super.updateItem(email, empty);
         if (email != null) {
             setStyle("-fx-background-color: #adb4bc");
-            /*try {
+            try {
                 setGraphic
                         (new MessageListItemController(email).init());
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
+            }
         }
     }
 }

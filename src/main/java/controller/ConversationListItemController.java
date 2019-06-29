@@ -1,12 +1,13 @@
 package controller;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Circle;
-import javafx.scene.text.Text;
 import model.Conversation;
 import model.Email;
 import model.PageLoader;
@@ -26,7 +27,7 @@ public class ConversationListItemController {
     @FXML
     public RadioButton imp, unread;
     @FXML
-    public Text starterName, convoText;
+    public Label starterName, textLable;
 
     public ConversationListItemController(Conversation conversation) throws IOException {
         this.conversation = conversation;
@@ -34,9 +35,9 @@ public class ConversationListItemController {
     }
 
     public AnchorPane init() throws IOException {
-        starterName.setText(conversation.getStarter().getUsername() + "@gmail.com");
-        if (conversation.getStarter().getImage() != null) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(conversation.getStarter().getImage());
+        starterName.setText(conversation.getSender().getUsername() + "@googlemail.com");
+        if (conversation.getSender().getImage() != null) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(conversation.getSender().getImage());
             Image im = new Image(bis);
             bis.close();
             senderImage.setImage(im);
@@ -52,9 +53,11 @@ public class ConversationListItemController {
             if (unread.isSelected() && imp.isSelected())
                 break;
         }
-        Email last = conversation.getLast();
-        convoText.setText(last.getSubject() + " - " +
-                last.getText().substring(0, 65 - last.getSubject().length()) + "...");
+        textLable.setText(conversation.getText());
         return root;
+    }
+
+    public void delete(MouseEvent mouseEvent) {
+        EmailsController.deleteConversation(conversation);
     }
 }
