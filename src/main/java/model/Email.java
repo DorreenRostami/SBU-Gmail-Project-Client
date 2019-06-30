@@ -11,18 +11,18 @@ public class Email extends Message implements Serializable {
     private String receiver;
     private String time;
     private String subject = "No Subject";
-    private List<byte[]> fileBytes;
+    private List<FileInfo> filesInfos = null;
     private boolean read = false;
     private boolean imp = false;
 
-    public Email(User sender, String receiver, String subject, String text, List<byte[]> fileBytes) {
+    public Email(User sender, String receiver, String subject, String text, List<FileInfo> filesInfos) {
         this.sender = sender;
         this.text = text;
         this.receiver = receiver;
         if (subject.length() > 0)
             this.subject = subject;
-        if (fileBytes != null)
-            this.fileBytes = fileBytes;
+        if (filesInfos != null && filesInfos.size() > 0)
+            this.filesInfos = filesInfos;
         this.time = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date());
     }
 
@@ -38,8 +38,8 @@ public class Email extends Message implements Serializable {
         return subject;
     }
 
-    public List<byte[]> getFileBytes() {
-        return fileBytes;
+    public List<FileInfo> getFilesInfos() {
+        return filesInfos;
     }
 
     public boolean isRead() {

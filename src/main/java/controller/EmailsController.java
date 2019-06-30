@@ -2,88 +2,102 @@ package controller;
 
 import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
-import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import model.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class EmailsController {
-    public static boolean serverError = false;
-    private static List<Conversation> inboxList = null;
-    private static List<Conversation> sentList = null;
-    private static List<Email> outboxList = null;
-    private static List<Conversation> currentList = null;
-    private List<byte[]> attachedFiles = new ArrayList<>();
+    static boolean serverError = false;
+    private List<Conversation> inboxList = null;
+    private List<Conversation> sentList = null;
+    private List<Email> outboxList = new ArrayList<>();
+    private List<Conversation> currentList = null;
+    private static Conversation convToDelete = null;
+    private List<FileInfo> attachedFiles = new ArrayList<>();
     private long GB = 2;
 
-    @FXML
-    public static ListView<Conversation> convosListView;
-    @FXML
-    public ListView<Email> messagesListView;
-    @FXML
-    public ToggleButton composeButton, inboxButton, sentButton, outboxButton;
-    @FXML
-    public TitledPane newPane;
-    @FXML
-    public TextField receiverTextField, subjectTextField;
-    @FXML
-    public TextArea textArea, attachedFilesTextArea;
-    @FXML
-    public Button sendButton, attachButton, cancelButton;
-    @FXML
-    public Text sizeWarning;
-    @FXML
-    public static Text serverErrorText;
+    @FXML public ListView<Conversation> convosListView;
+    @FXML public ListView<Email> messagesListView;
+    @FXML public ToggleButton composeButton, inboxButton, sentButton, outboxButton;
+    @FXML public TitledPane newPane;
+    @FXML public TextField receiverTextField, subjectTextField;
+    @FXML public TextArea textArea, attachedFilesTextArea;
+    @FXML public Button backToSignInButton, sendButton, attachButton, cancelButton;
+    @FXML public Text sizeWarning;
+    @FXML public Text serverErrorText;
+    @FXML public AnchorPane conversationMessagesPane;
+    @FXML public ImageView currentProfilePicture;
 
     public void initialize() {
         calculate();
+        ByteArrayInputStream bis = new ByteArrayInputStream(currentUser.user.getImage());
+        Image im = new Image(bis);
+        currentProfilePicture.setImage(im);
         inboxButton.setSelected(true);
         try {
+            bis.close();
             inboxList = currentUser.user.getInbox();
             currentList = inboxList;
         }
         catch (IOException e) {
             serverError = true;
         }
-        if (!serverError && inboxList != null) {
+        if (!serverError) {
             showConversationList(inboxList);
         }
-        else if (serverError) {
+        else {
             showServerError();
         }
     }
 
-    private static void showServerError() {
+    private void showServerError() {
         serverErrorText.setVisible(true);
-
         FadeTransition ft = new FadeTransition(Duration.millis(3000), serverErrorText);
         ft.setFromValue(1);
         ft.setToValue(0);
         ft.playFromStart();
-
         serverError = false;
     }
 
-    private static void showConversationList(List<Conversation> list) {
-        convosListView.setItems(FXCollections.observableArrayList(list));
-        convosListView.setCellFactory(item -> new ConversationListItem());
+    private void showConversationList(List<Conversation> list) {
+        convosListView.setVisible(true);
+        messagesListView.setVisible(false);
+        conversationMessagesPane.setVisible(false);
+        if (list == null || list.size() == 0) {
+            convosListView.setPlaceholder(new Label("No Conversation"));
+        }
+        else {
+            currentList = list;
+            convosListView.setItems(FXCollections.observableArrayList(list));
+            convosListView.setCellFactory(item -> new ConversationListItem());
+        }
     }
 
     private void showMessageList(List<Email> list) {
         convosListView.setVisible(false);
         messagesListView.setVisible(true);
-        messagesListView.setItems(FXCollections.observableArrayList(list));
-        messagesListView.setCellFactory(item -> new MessageListItem());
+        conversationMessagesPane.setVisible(true);
+        if (list == null || list.size() == 0) {
+            messagesListView.setPlaceholder(new Label("No Messages"));
+        }
+        else {
+            messagesListView.setItems(FXCollections.observableArrayList(list));
+            messagesListView.setCellFactory(item -> new MessageListItem());
+        }
     }
 
     private void calculate() {
@@ -110,9 +124,8 @@ public class EmailsController {
         if (actionEvent.getSource() == inboxButton) {
             sentButton.setSelected(false);
             outboxButton.setSelected(false);
+            showConversationList(inboxList);
             if (inboxList != null) {
-                currentList = inboxList;
-                showConversationList(inboxList);
                 return;
             }
             messageType = MessageType.inbox;
@@ -120,9 +133,8 @@ public class EmailsController {
         else if (actionEvent.getSource() == sentButton) {
             inboxButton.setSelected(false);
             outboxButton.setSelected(false);
+            showConversationList(sentList);
             if (sentList != null) {
-                currentList = sentList;
-                showConversationList(sentList);
                 return;
             }
             messageType = MessageType.sent;
@@ -136,12 +148,22 @@ public class EmailsController {
         }
 
         //load the list from the server if it hasn't been loaded before
-        List<Conversation> list = ListLoader.load(messageType);
-        if (!serverError && list != null) {
-            showConversationList(list);
-        }
-        else if (serverError) {
-            showServerError();
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Future<List<Conversation>> future = executor.submit(new ListLoader(messageType));
+        if (future.isDone()) {
+            List<Conversation> list = null;
+            try {
+                list = future.get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                e.getMessage();
+            }
+            if (!serverError && list != null) {
+                showConversationList(list);
+            }
+            else if (serverError) {
+                showServerError();
+            }
         }
     }
 
@@ -156,11 +178,33 @@ public class EmailsController {
     public void sendComposed() {
 
         Email email = new Email(currentUser.user, receiverTextField.getText(),
-               subjectTextField.getText(), textArea.getText(), attachedFiles);
+                subjectTextField.getText(), textArea.getText(), attachedFiles);
 
         outboxList.add(email);
+        Conversation newConv = new Conversation(email);
 
-        final Conversation[] conv = new Conversation[1];
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Future<Conversation> future = executor.submit(new MailSender(newConv));
+
+        if (future.isDone()) {
+            Conversation returnedConv = null;
+            try {
+                returnedConv = future.get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+            if (!serverError && returnedConv != null) {
+                if (!returnedConv.equals(newConv))
+                    inboxList.add(returnedConv);
+                outboxList.clear();
+
+            }
+            else showServerError();
+        }
+
+
+        /*final Conversation[] conv = new Conversation[1];
         Task<Void> sendMailTask = new Task<>() {
             @Override
             protected Void call() {
@@ -176,7 +220,7 @@ public class EmailsController {
 
         sendMailTask.setOnSucceeded(e -> updateOutbox());
 
-        new Thread(sendMailTask).start();
+        new Thread(sendMailTask).start();*/
         closeComposePane();
     }
 
@@ -188,6 +232,7 @@ public class EmailsController {
     }
 
     public void chooseFiles() {
+        attachedFiles = new ArrayList<>();
         FileChooser fc = new FileChooser();
         fc.setTitle("Choose files to attach");
         List<File> selectedFiles = fc.showOpenMultipleDialog(null);
@@ -206,7 +251,9 @@ public class EmailsController {
             try {
                 filesNames.append(file.getAbsolutePath()).append("\n");
                 byte[] data = Files.readAllBytes(file.toPath());
-                attachedFiles.add(data);
+                String fileName = file.getName();
+                FileInfo info = new FileInfo(data, fileName);
+                attachedFiles.add(info);
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -222,45 +269,67 @@ public class EmailsController {
         attachedFilesTextArea.setText("");
         newPane.setVisible(false);
         composeButton.setSelected(false);
+        attachedFiles = new ArrayList<>();
     }
 
-    static void deleteConversation(Conversation conversation) {
+    static void setDeletedConversation(Conversation conversation) {
+        convToDelete = conversation;
+    }
+
+    private void deleteConversation() {
+        //TO DO make conn to dlete conv
         try {
             new Connection(currentUser.user.getUsername());
         }
         catch (IOException e) {
             serverError = true;
-            showServerError();
             return;
         }
         boolean currIsInbox = currentList == inboxList;
-        inboxList.remove(conversation);
-        sentList.remove(conversation);
-        currentList = currIsInbox ? inboxList : sentList;
-        showConversationList(currentList);
+        inboxList.remove(convToDelete);
+        sentList.remove(convToDelete);
+        if (currIsInbox)
+            showConversationList(inboxList);
+        else
+            showConversationList(sentList);
+    }
+
+    public void changePage(ActionEvent actionEvent) throws IOException {
+        if (actionEvent.getSource() == backToSignInButton)
+            new PageLoader().load("/SignIn.fxml");
     }
 }
 
-class ListLoader {
-    static List<Conversation> load(MessageType listType) {
-        final List<Conversation>[] list = new List[]{null};
+class ListLoader implements Callable<List<Conversation>> {
+    private MessageType listType;
+    ListLoader(MessageType listType) {
+        this.listType = listType;
+    }
+    @Override
+    public List<Conversation> call() {
+        try {
+            return new Connection(currentUser.user.getUsername()).getList(listType);
+        }
+        catch (IOException e) {
+            EmailsController.serverError = true;
+        }
+        return null;
+    }
+}
 
-        Task<Void> showListTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    list[0] = new Connection(currentUser.user.getUsername()).getList(listType);
-                }
-                catch (IOException e) {
-                    EmailsController.serverError = true;
-                }
-                return null;
-            }
-        };
-//      showListTask.setOnSucceeded(e ->); progress pane
-
-        new Thread(showListTask).start();
-
-        return list[0];
+class MailSender implements Callable<Conversation> {
+    private Conversation conversation;
+    MailSender(Conversation conversation) {
+        this.conversation = conversation;
+    }
+    @Override
+    public Conversation call() {
+        try {
+            return new Connection(currentUser.user.getUsername()).sendMail(conversation);
+        }
+        catch (IOException e) {
+            EmailsController.serverError = true;
+        }
+        return null;
     }
 }

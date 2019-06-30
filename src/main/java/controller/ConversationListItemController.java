@@ -58,6 +58,6 @@ public class ConversationListItemController {
     }
 
     public void delete(MouseEvent mouseEvent) {
-        EmailsController.deleteConversation(conversation);
+        EmailsController.setDeletedConversation(conversation);
     }
 }
