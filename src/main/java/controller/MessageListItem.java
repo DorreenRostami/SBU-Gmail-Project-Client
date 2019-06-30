@@ -10,10 +10,9 @@ public class MessageListItem extends ListCell<Email> {
     public void updateItem(Email email, boolean empty) {
         super.updateItem(email, empty);
         if (email != null) {
-            setStyle("-fx-background-color: #adb4bc");
+            setStyle("-fx-background-color: #ffffff");
             try {
-                setGraphic
-                        (new MessageListItemController(email).init());
+                setGraphic(new MessageListItemController(email).init());
             } catch (IOException e) {
                 e.printStackTrace();
             }

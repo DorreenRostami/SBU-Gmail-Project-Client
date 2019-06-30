@@ -21,6 +21,23 @@ public class Connection {
         in = new ObjectInputStream(socket.getInputStream());
     }
 
+    public List<SignUpFeedback> settingsConnection(User user, String pass2) {
+        List<SignUpFeedback> messageList = new ArrayList<>();
+        try {
+            out.writeObject(new ServerMessage(MessageType.change, user, pass2));
+            SignUpFeedback str = null;
+            while (str != SignUpFeedback.changed) {
+                str = (SignUpFeedback) in.readObject();
+                messageList.add(str);
+            }
+            terminate();
+        }
+        catch (IOException | ClassNotFoundException e) {
+            e.getMessage();
+        }
+        return messageList;
+    }
+
     public void signUpConnection(User user) {
         try {
             out.writeObject(new ServerMessage(MessageType.makeAccount, user));
@@ -64,10 +81,10 @@ public class Connection {
         return false;
     }
 
-    public List<Conversation> getList (MessageType messageType) {
+    public List<Conversation> getList (MessageType listType) {
         List<Conversation> list = null;
         try {
-            out.writeObject(new ServerMessage(messageType, new User(username, "")));
+            out.writeObject(new ServerMessage(listType, new User(username, "")));
             out.flush();
             list = (List<Conversation>) in.readObject();
             terminate();
@@ -81,22 +98,37 @@ public class Connection {
     /**
      * sends the conversation which contains the new email to the server.
      * @param conversation the conversation containing the new email
-     * @return returns a conversation only containing an error email from the
-     * Mail Delivery Subsystem if the receiver of the new mail didn't exist,
-     * else returns the same conversation if the receiver existed.
+     * @return void
      */
-    public Conversation sendMail(Conversation conversation) {
-        Conversation conv = null;
+    public void sendMail(Conversation conversation) {
         try {
-            out.writeObject(conversation);
+            out.writeObject(new ServerMessage(MessageType.send, conversation));
             out.flush();
-            conv = (Conversation) in.readObject();
             terminate();
         }
-        catch (IOException | ClassNotFoundException e) {
+        catch (IOException e) {
             e.getMessage();
         }
-        return conv;
+    }
+
+    public void deleteConversation(Conversation conversation) {
+        try {
+            out.writeObject(new ServerMessage(MessageType.deleteConversation, conversation));
+            out.flush();
+        }
+        catch (IOException e) {
+            e.getMessage();
+        }
+    }
+
+    public void deleteMessage(Conversation conversation, Email email) {
+        try {
+            out.writeObject(new ServerMessage(MessageType.deleteMessage, conversation, email));
+            out.flush();
+        }
+        catch (IOException e) {
+            e.getMessage();
+        }
     }
 
     private void terminate() throws IOException {

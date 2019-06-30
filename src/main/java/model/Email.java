@@ -34,6 +34,10 @@ public class Email extends Message implements Serializable {
         return time;
     }
 
+    public void setTime() {
+        this.time = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date());
+    }
+
     public String getSubject() {
         return subject;
     }

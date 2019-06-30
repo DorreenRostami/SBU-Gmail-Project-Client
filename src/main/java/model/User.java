@@ -3,7 +3,6 @@ package model;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class User implements Serializable, Person {
@@ -27,7 +26,7 @@ public class User implements Serializable, Person {
         this.password = password;
     }
 
-    public User(String name, String surname, String birthday, String username, String password) throws ParseException {
+    public User(String name, String surname, String birthday, String username, String password) {
         this(username, password);
         this.name = name;
         this.surname = surname;
@@ -119,13 +118,5 @@ public class User implements Serializable, Person {
     @Override
     public int hashCode() {
         return username.hashCode();
-    }
-
-    public List<Conversation> getInbox() throws IOException {
-        return new Connection(username).getList(MessageType.inbox);
-    }
-
-    public List<Conversation> getSent() throws IOException {
-        return new Connection(username).getList(MessageType.sent);
     }
 }

@@ -10,7 +10,7 @@ public class ConversationListItem extends ListCell<Conversation> {
     public void updateItem(Conversation conversation, boolean empty) {
         super.updateItem(conversation, empty);
         if (conversation != null) {
-            setStyle("-fx-background-color: #adb4bc");
+            setStyle("-fx-background-color: #ffffff");
             try {
                 setGraphic
                         (new ConversationListItemController(conversation).init());

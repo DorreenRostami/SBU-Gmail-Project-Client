@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 public class ConversationListItemController {
-    private static final String NO_PHOTO = "resources/avatar.png";
+    private static final String NO_PHOTO = "src/main/resources/appImages/avatar.png";
     private Conversation conversation;
 
     @FXML
@@ -27,7 +27,7 @@ public class ConversationListItemController {
     @FXML
     public RadioButton imp, unread;
     @FXML
-    public Label starterName, textLable;
+    public Label starterName, textLabel;
 
     public ConversationListItemController(Conversation conversation) throws IOException {
         this.conversation = conversation;
@@ -53,11 +53,11 @@ public class ConversationListItemController {
             if (unread.isSelected() && imp.isSelected())
                 break;
         }
-        textLable.setText(conversation.getText());
+        textLabel.setText(conversation.getText());
         return root;
     }
 
     public void delete(MouseEvent mouseEvent) {
-        EmailsController.setDeletedConversation(conversation);
+        EmailsController.deleteConversation(conversation);
     }
 }

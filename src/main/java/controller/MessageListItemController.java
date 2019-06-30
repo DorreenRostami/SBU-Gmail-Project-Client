@@ -19,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class MessageListItemController {
-    private static final String NO_PHOTO = "resources/avatar.png";
+    private static final String NO_PHOTO = "src/main/resources/appImages/avatar.png";
     private static final String DOWNLOAD_PATH= "resources/downloads/";
     private StringBuilder filesPaths = new StringBuilder();
     private Email email;
@@ -44,6 +44,7 @@ public class MessageListItemController {
 
     public AnchorPane init() throws IOException {
         senderName.setText(email.getSender().getUsername() + "@googlemail.com");
+        receiverName.setText(email.getReceiver() + "@googlemail.com");
         if (email.getSender().getImage() != null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(email.getSender().getImage());
             Image im = new Image(bis);
@@ -88,6 +89,7 @@ public class MessageListItemController {
             downloadButton.setVisible(false);
             pathsTextArea.setVisible(false);
         }
+        messageText.setEditable(false);
         return root;
     }
 
@@ -109,5 +111,13 @@ public class MessageListItemController {
         downloadButton.setVisible(false);
         pathsTextArea.setText(filesPaths.toString());
         pathsTextArea.setVisible(true);
+    }
+
+    public void forwardMessage() {
+        EmailsController.forwardMessage(email);
+    }
+
+    public void deleteMessage() {
+        EmailsController.deleteMessage(email);
     }
 }
