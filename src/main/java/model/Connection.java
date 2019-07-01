@@ -131,6 +131,19 @@ public class Connection {
         }
     }
 
+    public void saveListChanges(List<Conversation> inbox, List<Conversation> sent){
+        try {
+            out.writeObject(new ServerMessage(MessageType.updateInbox, inbox));
+            out.flush();
+            out.writeObject(new ServerMessage(MessageType.updateSent, sent));
+            out.flush();
+            terminate();
+        }
+        catch (IOException e) {
+            e.getMessage();
+        }
+    }
+
     private void terminate() throws IOException {
         in.close();
         out.close();

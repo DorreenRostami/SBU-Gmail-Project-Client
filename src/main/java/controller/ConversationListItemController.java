@@ -1,5 +1,6 @@
 package controller;
 
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -8,9 +9,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Circle;
-import model.Conversation;
-import model.Email;
-import model.PageLoader;
+import model.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,6 +57,27 @@ public class ConversationListItemController {
     }
 
     public void delete(MouseEvent mouseEvent) {
-        EmailsController.deleteConversation(conversation);
+        Task<Void> deleteTask = new Task<>() {
+            @Override
+            protected Void call() {
+                try {
+                    new Connection(currentUser.user.getUsername()).deleteConversation(conversation);
+                }
+                catch (IOException e) {
+                    EmailsController.serverError = true;
+                }
+                return null;
+            }
+        };
+        deleteTask.setOnSucceeded(e -> {
+            try {
+                EmailsController.deletedConversation = conversation;
+                new PageLoader().load("/Emails.fxml");
+            }
+            catch (IOException e1) {
+                e1.getMessage();
+            }
+        });
+        new Thread(deleteTask).start();
     }
 }

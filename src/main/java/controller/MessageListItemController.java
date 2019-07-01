@@ -1,5 +1,6 @@
 package controller;
 
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -7,9 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Circle;
-import model.Email;
-import model.FileInfo;
-import model.PageLoader;
+import model.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -22,7 +21,7 @@ public class MessageListItemController {
     private static final String NO_PHOTO = "src/main/resources/appImages/avatar.png";
     private static final String DOWNLOAD_PATH= "resources/downloads/";
     private StringBuilder filesPaths = new StringBuilder();
-    private Email email;
+    private Email message;
 
     @FXML
     public AnchorPane root;
@@ -37,16 +36,16 @@ public class MessageListItemController {
     @FXML
     public ImageView senderImage;
 
-    public MessageListItemController(Email email) throws IOException {
-        this.email = email;
+    public MessageListItemController(Email message) throws IOException {
+        this.message = message;
         new PageLoader().load("/MessageListItem.fxml", this);
     }
 
     public AnchorPane init() throws IOException {
-        senderName.setText(email.getSender().getUsername() + "@googlemail.com");
-        receiverName.setText(email.getReceiver() + "@googlemail.com");
-        if (email.getSender().getImage() != null) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(email.getSender().getImage());
+        senderName.setText(message.getSender().getUsername() + "@googlemail.com");
+        receiverName.setText(message.getReceiver() + "@googlemail.com");
+        if (message.getSender().getImage() != null) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(message.getSender().getImage());
             Image im = new Image(bis);
             bis.close();
             senderImage.setImage(im);
@@ -54,16 +53,16 @@ public class MessageListItemController {
         else
             senderImage.setImage(new Image(Paths.get(NO_PHOTO).toUri().toString()));
         senderImage.setClip(new Circle(30, 30, 30));
-        if (email.isImp())
+        if (message.isImp())
             imp.setSelected(true);
-        if (email.isRead())
+        if (message.isRead())
             unread.setSelected(false);
-        messageText.setText(email.getText());
-        if (email.getFilesInfos() != null) {
+        messageText.setText(message.getText());
+        if (message.getFilesInfos() != null) {
             File dir = new File("resources/downloads");
             File[] directoryListing = dir.listFiles();
             if (directoryListing != null) {
-                for (FileInfo uploadedInfo : email.getFilesInfos()) {
+                for (FileInfo uploadedInfo : message.getFilesInfos()) {
                     for (File child : directoryListing) {
                         byte[] bytes = Files.readAllBytes(child.toPath());
                         FileInfo childInfo = new FileInfo(bytes, child.getName());
@@ -94,7 +93,7 @@ public class MessageListItemController {
     }
 
     public void download(ActionEvent actionEvent) throws IOException {
-        for (FileInfo fileInfo : email.getFilesInfos()) {
+        for (FileInfo fileInfo : message.getFilesInfos()) {
             File newFile = new File(DOWNLOAD_PATH + fileInfo.getFileName());
             if (newFile.exists()) {
                 String[] parts = fileInfo.getFileName().split(".");
@@ -114,10 +113,31 @@ public class MessageListItemController {
     }
 
     public void forwardMessage() {
-        EmailsController.forwardMessage(email);
+        EmailsController.forwardMessage(message);
     }
 
     public void deleteMessage() {
-        EmailsController.deleteMessage(email);
+        Task<Void> deleteTask = new Task<>() {
+            @Override
+            protected Void call() {
+                try {
+                    new Connection(currentUser.user.getUsername()).deleteMessage(EmailsController.selectedConv, message);
+                }
+                catch (IOException e) {
+                    EmailsController.serverError = true;
+                }
+                return null;
+            }
+        };
+        deleteTask.setOnSucceeded(e -> {
+            try {
+                EmailsController.deletedMessage = message;
+                new PageLoader().load("/Emails.fxml");
+            }
+            catch (IOException e1) {
+                e1.getMessage();
+            }
+        });
+        new Thread(deleteTask).start();
     }
 }

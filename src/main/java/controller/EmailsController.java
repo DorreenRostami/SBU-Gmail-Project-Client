@@ -17,50 +17,57 @@ import model.*;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class EmailsController {
     static boolean serverError = false;
-    private List<Email> outboxList = new ArrayList<>();
-    private static List<Conversation> currentList = null;
-    private static List<Conversation> inboxList = null;
-    private static List<Conversation> sentList = null;
-    private static Conversation selectedConv = null;
+    static Email deletedMessage = null;
+    static Conversation deletedConversation = null;
+    private static List<Email> outboxList = new ArrayList<>();
+    private static ListType currentListType = null;
+    static List<Conversation> inboxList = null;
+    static List<Conversation> sentList = null;
+    static Conversation selectedConv = null;
+
     private List<FileInfo> attachedFiles = new ArrayList<>();
     private long GB = 2;
 
-    @FXML public static ListView<Conversation> convosListView;
-    @FXML public static ListView<Email> messagesListView;
+    @FXML public ListView<Conversation> convosListView;
+    @FXML public ListView<Email> messagesListView;
     @FXML public ToggleButton composeButton, inboxButton, sentButton, outboxButton;
     @FXML public TitledPane newPane;
-    @FXML public static TitledPane newPane2;
-    @FXML public TextField receiverTextField;
-    @FXML public TextField subjectTextField;
-    @FXML public TextField receiverTextField2;
-    @FXML public static TextField subjectTextField2;
-    @FXML public TextField searchBar;
-    @FXML public TextArea textArea;
-    @FXML public TextArea attachedFilesTextArea;
-    @FXML public static TextArea textArea2;
-    @FXML public static TextArea attachedFilesTextArea2;
-    @FXML public Button sendButton;
-    @FXML public Button sendButton1;
-    @FXML public Button cancelButton;
-    @FXML public Button attachButton;
-    @FXML public Button sendButton2;
-    @FXML public Button cancelButton2;
-    @FXML public static Button attachButton2;
-    @FXML public Button searchButton;
-    @FXML public Text sizeWarning, sizeWarning2;
-    @FXML public static Text serverErrorText;
+    @FXML public TextField receiverTextField, subjectTextField, searchBar;
+    @FXML public TextArea textArea, attachedFilesTextArea;
+    @FXML public Text sizeWarning, serverErrorText;
+    @FXML public Button sendButton, sendButton1, cancelButton, attachButton, searchButton;
     @FXML public AnchorPane conversationMessagesPane;
     @FXML public ImageView currentProfilePicture, settingsIcon, refreshIcon;
     @FXML public RadioButton searchByUser, searchBySubject;
 
+    /**
+     * every time this page loads the imageView and listView need to be set.
+     *
+     * The if statement explanation:
+     * The first time that this page loads, there's no server error so it should load everything.
+     * but when it loads again (by being called from other controllers) there might have
+     * been an error connecting to server (serverError is true), so if there's an error
+     * it means the lists haven't changed in the server and it should just show the list
+     * we had (which will stay the same after loading a new controller because the lists
+     * are static) but if there was no error it should load the new lists from the server
+     * again just as it would if it were the first time this page was being loaded.
+     */
     public void initialize() {
+        Thread t1 = new LoadInbox();
+        Thread t2 = new LoadSent();
+        if (!serverError && deletedMessage == null && deletedConversation == null) {
+            t1.start();
+            t2.start();
+        }
+
         calculate();
+
         if (currentUser.user.getImage() != null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(currentUser.user.getImage());
             Image im = new Image(bis);
@@ -72,19 +79,122 @@ public class EmailsController {
                 e.getMessage();
             }
         }
-        inboxButton.setSelected(true);
-        loadList(MessageType.inbox);
-        loadList(MessageType.sent);
-        currentList = inboxList;
+
         if (!serverError) {
-            showConversationList(currentList);
+            if (currentListType == null || currentListType == ListType.inbox) {
+                currentListType = ListType.inbox;
+                inboxButton.setSelected(true);
+                if (deletedConversation == null) {
+                    try {
+                        t1.join();
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    updateDeletedConversation();
+                }
+                showConversationList(inboxList);
+            }
+            else if (currentListType == ListType.sent) {
+                sentButton.setSelected(true);
+                if (deletedConversation == null) {
+                    try {
+                        t2.join();
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    updateDeletedConversation();
+                }
+                showConversationList(sentList);
+            }
+            else if (currentListType == ListType.inboxConv) {
+                inboxButton.setSelected(true);
+                if (deletedMessage == null) {
+                    try {
+                        t1.join();
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    updateDeletedMessage();
+                }
+                showMessageList(selectedConv.getMessages());
+            }
+            else if (currentListType == ListType.sentConv) {
+                sentButton.setSelected(true);
+                if (deletedMessage == null) {
+                    try {
+                        t2.join();
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                    updateDeletedMessage();
+                showMessageList(selectedConv.getMessages());
+            }
+            else {
+                if (outboxList.size() > 0) {
+                    for (Email email : outboxList)
+                        send(new Conversation(email));
+                }
+                showMessageList(null);
+                outboxButton.setSelected(true);
+            }
         }
         else {
             showServerError();
         }
     }
 
-    private static void showServerError() {
+    private void updateDeletedConversation() {
+        inboxList.remove(deletedConversation);
+        sentList.remove(deletedConversation);
+        deletedConversation = null;
+    }
+
+    private void updateDeletedMessage() {
+        if (selectedConv != null && selectedConv.getMessages().size() > 1) {
+            selectedConv.getMessages().remove(deletedMessage);
+            for (int i = 0; i < inboxList.size(); i++) {
+                if (inboxList.get(i).equals(selectedConv)) {
+                    inboxList.set(i, selectedConv);
+                    break;
+                }
+            }
+            for (int i = 0; i < sentList.size(); i++) {
+                if (sentList.get(i).equals(selectedConv)) {
+                    sentList.set(i, selectedConv);
+                    break;
+                }
+            }
+            showMessageList(selectedConv.getMessages());
+        }
+        else if (selectedConv != null) {
+            inboxList.remove(selectedConv);
+            sentList.remove(selectedConv);
+            selectedConv = null;
+            if (inboxButton.isSelected())
+                showConversationList(inboxList);
+            else
+                showConversationList(sentList);
+        }
+        else {
+            outboxList.remove(deletedMessage);
+            showMessageList(outboxList);
+        }
+        deletedMessage = null;
+    }
+
+    private void showServerError() {
         serverErrorText.setVisible(true);
         FadeTransition ft = new FadeTransition(Duration.millis(3000), serverErrorText);
         ft.setFromValue(1);
@@ -102,7 +212,6 @@ public class EmailsController {
             convosListView.setPlaceholder(new Label("No Conversation"));
         }
         else {
-            currentList = list;
             List<Conversation> copy = new ArrayList<>(list);
             Collections.reverse(copy);
             convosListView.setItems(FXCollections.observableArrayList(copy));
@@ -133,6 +242,10 @@ public class EmailsController {
 
     public void select() {
         selectedConv = convosListView.getSelectionModel().getSelectedItem();
+        if (currentListType == ListType.inbox)
+            currentListType = ListType.inboxConv;
+        else
+            currentListType = ListType.sentConv;
         showMessageList(selectedConv.getMessages());
     }
 
@@ -142,19 +255,21 @@ public class EmailsController {
             ((ToggleButton) actionEvent.getSource()).setSelected(true);
             return;
         }
-        //change the list to the selectedConv list
+        //change the list
         if (actionEvent.getSource() == inboxButton) {
             sentButton.setSelected(false);
             outboxButton.setSelected(false);
+            currentListType = ListType.inbox;
             showConversationList(inboxList);
         }
         else if (actionEvent.getSource() == sentButton) {
             inboxButton.setSelected(false);
             outboxButton.setSelected(false);
+            currentListType = ListType.sent;
             showConversationList(sentList);
         }
         else if (actionEvent.getSource() == outboxButton) {
-            currentList = null;
+            currentListType = ListType.outbox;
             inboxButton.setSelected(false);
             sentButton.setSelected(false);
             showMessageList(outboxList);
@@ -187,9 +302,6 @@ public class EmailsController {
         if (newPane.isVisible()) {
             composeButton.setSelected(true);
         }
-        else if (newPane2.isVisible()) {
-            composeButton.setSelected(false);
-        }
         else {
             newPane.setVisible(true);
             sendButton.setVisible(true);
@@ -199,13 +311,8 @@ public class EmailsController {
     }
 
     public void sendComposed() {
-        Email email;
-        if (newPane.isVisible())
-            email = new Email(currentUser.user, receiverTextField.getText(),
+        Email email = new Email(currentUser.user, receiverTextField.getText(),
                 subjectTextField.getText(), textArea.getText(), attachedFiles);
-        else
-            email = new Email(currentUser.user, receiverTextField2.getText(),
-                    subjectTextField2.getText(), textArea2.getText(), attachedFiles);
         outboxList.add(email);
         send(new Conversation(email));
         closeComposePane();
@@ -242,15 +349,11 @@ public class EmailsController {
         for (File f : selectedFiles) {
             size += f.length();
             if (size > GB) {
-                if (newPane.isVisible())
-                    sizeWarning.setVisible(true);
-                else
-                    sizeWarning2.setVisible(true);
+                sizeWarning.setVisible(true);
                 return;
             }
         }
         sizeWarning.setVisible(false);
-        sizeWarning2.setVisible(false);
         StringBuilder filesNames = new StringBuilder();
         for (File file : selectedFiles) {
             try {
@@ -264,34 +367,22 @@ public class EmailsController {
                 e.printStackTrace();
             }
         }
-        if(newPane.isVisible())
-            attachedFilesTextArea.setText(filesNames.toString());
-        else
-            attachedFilesTextArea2.setText(filesNames.toString());
+        attachedFilesTextArea.setText(filesNames.toString());
     }
 
     public void closeComposePane() {
-        if (newPane.isVisible()) {
-            receiverTextField.setText("");
-            subjectTextField.setText("");
-            textArea.setText("");
-            attachedFilesTextArea.setText("");
-            newPane.setVisible(false);
-            composeButton.setSelected(false);
-            receiverTextField.setEditable(true);
-        }
-        else {
-            receiverTextField2.setText("");
-            subjectTextField2.setText("");
-            textArea2.setText("");
-            attachedFilesTextArea2.setText("");
-            newPane2.setVisible(false);
-        }
+        receiverTextField.setText("");
+        subjectTextField.setText("");
+        textArea.setText("");
+        attachedFilesTextArea.setText("");
+        newPane.setVisible(false);
+        composeButton.setSelected(false);
+        receiverTextField.setEditable(true);
         attachedFiles = new ArrayList<>();
     }
 
     static void forwardMessage(Email email) {
-        newPane2.setVisible(true);
+        /*newPane2.setVisible(true);
         subjectTextField2.setText(email.getSubject());
         textArea2.setText(email.getText());
         StringBuilder filesNames = new StringBuilder();
@@ -300,87 +391,26 @@ public class EmailsController {
                 filesNames.append(fileInfo.getFileName()).append("\n");
             attachButton2.setVisible(false);
         }
-        attachedFilesTextArea2.setText(filesNames.toString());
+        attachedFilesTextArea2.setText(filesNames.toString());*/
     }
 
-    static void deleteConversation(Conversation conv) {
-        Task<Void> deleteTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    new Connection(currentUser.user.getUsername()).deleteConversation(conv);
-                }
-                catch (IOException e) {
-                    serverError = true;
-                }
-                return null;
-            }
-        };
-        deleteTask.setOnSucceeded(e -> {
-            if (!serverError) {
-                boolean currIsInbox = currentList == inboxList;
-                inboxList.remove(conv);
-                sentList.remove(conv);
-                currentList = currIsInbox ? inboxList : sentList;
-
-                List<Conversation> copy = new ArrayList<>(currentList);
-                Collections.reverse(copy);
-                convosListView.setItems(FXCollections.observableArrayList(copy));
-                convosListView.setCellFactory(conversationListView -> new ConversationListItem());
-            }
-            else
-                showServerError();
-        });
-        new Thread(deleteTask).start();
-    }
-
-    public static void deleteMessage(Email email) {
-        Task<Void> deleteTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    new Connection(currentUser.user.getUsername()).deleteMessage(selectedConv, email);
-                }
-                catch (IOException e) {
-                    serverError = true;
-                }
-                return null;
-            }
-        };
-        deleteTask.setOnSucceeded(e -> {
-            if (!serverError) {
-                boolean currIsInbox = currentList == inboxList;
-                selectedConv.getMessages().remove(email);
-                for (int i = 0; i < inboxList.size(); i++) {
-                    if (inboxList.get(i).equals(selectedConv)) {
-                        inboxList.set(i, selectedConv);
-                        break;
-                    }
-                }
-                for (int i = 0; i < sentList.size(); i++) {
-                    if (sentList.get(i).equals(selectedConv)) {
-                        sentList.set(i, selectedConv);
-                        break;
-                    }
-                }
-                currentList = currIsInbox ? inboxList : sentList;
-
-                messagesListView.setItems(FXCollections.observableArrayList(selectedConv.getMessages()));
-                messagesListView.setCellFactory(messagesListView -> new MessageListItem());
-            }
-            else
-                showServerError();
-        });
-        new Thread(deleteTask).start();
-    }
-
-    public void changePage() throws IOException {
+    public void signOut() throws IOException {
+        new Connection(currentUser.user.getUsername()).saveListChanges(inboxList, sentList);
+        currentListType = null;
+        inboxList = null;
+        sentList = null;
+        outboxList = new ArrayList<>();
+        currentUser.user = null;
+        serverError = false;
         new PageLoader().load("/SignIn.fxml");
     }
 
     public void backToConvList() {
         selectedConv = null;
-        showConversationList(currentList);
+        if (inboxButton.isSelected())
+            showConversationList(inboxList);
+        else
+            showConversationList(sentList);
     }
 
     public void goToSettings() throws IOException {
@@ -399,11 +429,11 @@ public class EmailsController {
     }
 
     public void search() {
-        if (currentList == null || currentList.size() == 0)
-            return;
         List<Conversation> searchResult = new ArrayList<>();
+        Set<Conversation> setOfAllConversations = Stream.concat(inboxList.stream(), sentList.stream()).
+                collect(Collectors.toSet());
         if (searchByUser.isSelected()) {
-            for (Conversation conversation : currentList) {
+            for (Conversation conversation : setOfAllConversations) {
                 for (Email email : conversation.getMessages()) {
                     if (email.getSender().getUsername().toLowerCase().contains(searchBar.getText().toLowerCase()) ||
                             email.getReceiver().toLowerCase().contains(searchBar.getText().toLowerCase())) {
@@ -414,7 +444,7 @@ public class EmailsController {
             }//end searching conversations
         }
         else {
-            for (Conversation conversation : currentList) {
+            for (Conversation conversation : setOfAllConversations) {
                 for (Email email : conversation.getMessages()) {
                     if (email.getSubject().toLowerCase().contains(searchBar.getText().toLowerCase())) {
                         searchResult.add(conversation);
@@ -424,50 +454,39 @@ public class EmailsController {
             }//end searching conversations
         }
         showConversationList(searchResult);
+        inboxButton.setSelected(false);
+        outboxButton.setSelected(false);
+        sentButton.setSelected(false);
     }
 
-    public void refresh() {
-        if (currentList == inboxList) {
-            loadList(MessageType.inbox);
-            showConversationList(inboxList);
-            loadList(MessageType.sent);
-        }
-        else {
-            loadList(MessageType.sent);
-            showConversationList(sentList);
-            loadList(MessageType.inbox);
-        }
-        if (outboxList != null && outboxList.size() > 0) {
-            for (Email email : outboxList)
-                send(new Conversation(email));
-        }
+    public void refresh() throws IOException {
+        new PageLoader().load("/Emails.fxml");
     }
 
-    private static List<Conversation> loaded;
-    private void loadList(MessageType messageType) {
-        Task<Void> loadTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    loaded = new Connection(currentUser.user.getUsername()).getList(messageType);;
-                }
-                catch (IOException e) {
-                    serverError = true;
-                }
-                return null;
-            }
-        };
-        loadTask.setOnSucceeded(e -> {
-            if (!serverError) {
-                if (messageType == MessageType.inbox)
-                    inboxList = loaded;
-                else
-                    sentList = loaded;
-            }
-            else {
-                showServerError();
-            }
-        });
-        new Thread(loadTask).start();
+    public void block(ActionEvent actionEvent) {
+    }
+}
+
+class LoadInbox extends Thread {
+    @Override
+    public void run() {
+        try {
+            EmailsController.inboxList = new Connection(currentUser.user.getUsername()).getList(MessageType.inbox);
+        }
+        catch (IOException e) {
+            EmailsController.serverError = true;
+        }
+    }
+}
+
+class LoadSent extends Thread {
+    @Override
+    public void run() {
+        try {
+            EmailsController.sentList = new Connection(currentUser.user.getUsername()).getList(MessageType.sent);
+        }
+        catch (IOException e) {
+            EmailsController.serverError = true;
+        }
     }
 }
