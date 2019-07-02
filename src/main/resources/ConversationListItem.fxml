@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane fx:id="root" maxHeight="70.0" minHeight="70.0" prefHeight="70.0" prefWidth="629.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <ImageView fx:id="senderImage" fitHeight="60.0" fitWidth="60.0" layoutX="2.0" layoutY="5.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="2.0" AnchorPane.topAnchor="5.0">
+         <effect>
+            <DropShadow />
+         </effect>
+         <image>
+            <Image url="@appImages/avatar.png" />
+         </image>
+      </ImageView>
+      <Label layoutX="160.0" layoutY="5.0" prefHeight="18.0" prefWidth="116.0" text="Conversation Starter:" AnchorPane.leftAnchor="160.0" AnchorPane.rightAnchor="353.0" AnchorPane.topAnchor="5.0" />
+      <RadioButton fx:id="unread" layoutX="70.0" layoutY="45.0" mnemonicParsing="false" onAction="#markUnread" text="Unread" textFill="#331ddf" AnchorPane.leftAnchor="70.0" AnchorPane.topAnchor="45.0" />
+      <RadioButton fx:id="imp" layoutX="70.0" layoutY="20.0" mnemonicParsing="false" onAction="#markImp" text="Important" textFill="#c6d708" AnchorPane.leftAnchor="70.0" AnchorPane.topAnchor="20.0" />
+      <Label fx:id="textLabel" layoutX="160.0" layoutY="35.0" prefHeight="18.0" prefWidth="320.0" text="textLabel" AnchorPane.leftAnchor="160.0" AnchorPane.rightAnchor="150.0" AnchorPane.topAnchor="35.0" />
+      <Label fx:id="starterName" layoutX="301.0" layoutY="5.0" prefHeight="18.0" prefWidth="194.0" text="starterName" AnchorPane.leftAnchor="290.0" AnchorPane.rightAnchor="150.0" AnchorPane.topAnchor="5.0" />
+      <ImageView fx:id="trashIcon" fitHeight="31.0" fitWidth="30.0" layoutX="586.6" layoutY="20.0" onMouseClicked="#delete" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="5.0">
+         <image>
+            <Image url="@appImages/trash.jpg" />
+         </image>
+      </ImageView>
+      <Text fx:id="dateText" fill="#575656" layoutX="479.0" layoutY="49.0" strokeType="OUTSIDE" strokeWidth="0.0" text="time" AnchorPane.leftAnchor="480.0" />
+   </children>
+</AnchorPane>

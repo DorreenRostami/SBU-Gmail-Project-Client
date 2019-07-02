@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="200.0" minWidth="630.0" prefHeight="200.0" prefWidth="629.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <ImageView fx:id="senderImage" fitHeight="60.0" fitWidth="60.0" layoutX="15.0" layoutY="15.0" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="10.0">
+         <effect>
+            <DropShadow />
+         </effect>
+         <image>
+            <Image url="@appImages/avatar.png" />
+         </image>
+      </ImageView>
+      <Label layoutX="125.0" layoutY="10.0" text="From:" AnchorPane.leftAnchor="125.0" AnchorPane.topAnchor="10.0" />
+      <RadioButton fx:id="unread" layoutX="15.0" layoutY="110.0" mnemonicParsing="false" onAction="#markUnread" text="Unread" textFill="#331ddf" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="110.0" />
+      <RadioButton fx:id="imp" layoutX="15.0" layoutY="81.0" mnemonicParsing="false" onAction="#markImp" text="Important" textFill="#c6d708" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="80.0" />
+      <Label fx:id="senderName" layoutX="175.0" layoutY="10.0" prefHeight="18.0" prefWidth="160.0" text="senderName" AnchorPane.leftAnchor="175.0" AnchorPane.topAnchor="10.0" />
+      <TextArea fx:id="messageText" layoutX="120.0" layoutY="30.0" prefHeight="80.0" prefWidth="495.0" AnchorPane.leftAnchor="120.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="30.0" />
+      <Label layoutX="405.0" layoutY="10.0" text="To:" AnchorPane.leftAnchor="400.0" AnchorPane.topAnchor="10.0" />
+      <Label fx:id="receiverName" layoutX="440.0" layoutY="10.0" prefHeight="18.0" prefWidth="160.0" text="receiverName" AnchorPane.leftAnchor="440.0" AnchorPane.topAnchor="10.0" />
+      <Button fx:id="downloadButton" layoutX="120.0" layoutY="119.0" mnemonicParsing="false" onAction="#download" text="Download Attachments" />
+      <TextArea fx:id="pathsTextArea" disable="true" layoutX="415.0" layoutY="119.0" prefHeight="60.0" prefWidth="200.0" promptText="Downloaded Files Paths" />
+      <Button fx:id="forwardButton" layoutX="120.0" layoutY="158.0" mnemonicParsing="false" onAction="#forwardMessage" text="Forward" />
+      <ImageView fx:id="trashIcon" fitHeight="32.0" fitWidth="30.0" layoutX="14.0" layoutY="156.0" onMouseClicked="#deleteMessage" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@appImages/trash.jpg" />
+         </image>
+      </ImageView>
+   </children>
+</AnchorPane>
