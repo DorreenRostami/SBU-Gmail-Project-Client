@@ -30,6 +30,28 @@ public class SettingsController {
     private byte[] chosenImage = currentUser.user.getImage();
 
     public void initialize() {
+        //making mobile and birthday text fields numeric
+        mobileTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                mobileTextField.setText(oldValue);
+            }
+        });
+        dayTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                dayTextField.setText(oldValue);
+            }
+        });
+        monthTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                monthTextField.setText(oldValue);
+            }
+        });
+        yearTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                yearTextField.setText(oldValue);
+            }
+        });
+
         choiceBox.getItems().addAll(Gender.Male, Gender.Female);
         if (currentUser.user.getImage() != null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(chosenImage);
@@ -42,6 +64,7 @@ public class SettingsController {
                 e.getMessage();
             }
         }
+
         String[] bday = currentUser.user.getBirthday().split("/");
         firstNameTextField.setText(currentUser.user.getName());
         lastNameTextField.setText(currentUser.user.getSurname());

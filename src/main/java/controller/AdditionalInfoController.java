@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import model.*;
 
@@ -29,6 +30,7 @@ public class AdditionalInfoController {
                 mobileTextField.setText(oldValue);
             }
         });
+        image.setClip(new Circle(70, 70, 70));
     }
 
     public void openFileChooser() throws IOException {

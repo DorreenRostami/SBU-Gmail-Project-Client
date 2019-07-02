@@ -53,6 +53,7 @@ public class MessageListItemController {
         else
             senderImage.setImage(new Image(Paths.get(NO_PHOTO).toUri().toString()));
         senderImage.setClip(new Circle(30, 30, 30));
+
         if (message.isImp())
             imp.setSelected(true);
         if (message.isRead())
@@ -112,32 +113,49 @@ public class MessageListItemController {
         pathsTextArea.setVisible(true);
     }
 
-    public void forwardMessage() {
-        EmailsController.forwardMessage(message);
+    public void forwardMessage() throws IOException {
+        EmailsController.forwardedMessage = message;
+        new PageLoader().load("/Emails.fxml");
     }
 
     public void deleteMessage() {
-        Task<Void> deleteTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    new Connection(currentUser.user.getUsername()).deleteMessage(EmailsController.selectedConv, message);
-                }
-                catch (IOException e) {
-                    EmailsController.serverError = true;
-                }
-                return null;
-            }
-        };
-        deleteTask.setOnSucceeded(e -> {
-            try {
-                EmailsController.deletedMessage = message;
-                new PageLoader().load("/Emails.fxml");
-            }
-            catch (IOException e1) {
-                e1.getMessage();
-            }
-        });
-        new Thread(deleteTask).start();
+        if (EmailsController.selectedConv.getMessages().size() > 1) {
+            EmailsController.selectedConv.getMessages().remove(message);
+            updateConv();
+        }
+        else {
+            EmailsController.sentList.remove(EmailsController.selectedConv);
+            EmailsController.inboxList.remove(EmailsController.selectedConv);
+            EmailsController.selectedConv = null;
+            new MailUpdater().start();
+        }
+    }
+
+    public void markImp() {
+        int i = EmailsController.selectedConv.getMessages().indexOf(message);
+        if (imp.isSelected())
+            message.setImp(true);
+        else
+            message.setImp(false);
+        EmailsController.selectedConv.getMessages().set(i, message);
+        updateConv();
+    }
+
+    public void markUnread() {
+        int i = EmailsController.selectedConv.getMessages().indexOf(message);
+        if (unread.isSelected())
+            message.setRead(false);
+        else
+            message.setRead(true);
+        EmailsController.selectedConv.getMessages().set(i, message);
+        updateConv();
+    }
+
+    private void updateConv() {
+        int i = EmailsController.sentList.indexOf(EmailsController.selectedConv);
+        EmailsController.sentList.set(i, EmailsController.selectedConv);
+        i = EmailsController.inboxList.indexOf(EmailsController.selectedConv);
+        EmailsController.inboxList.set(i, EmailsController.selectedConv);
+        new MailUpdater().start();
     }
 }

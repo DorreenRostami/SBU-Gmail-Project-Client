@@ -10,6 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
@@ -23,8 +24,8 @@ import java.util.stream.Stream;
 
 public class EmailsController {
     static boolean serverError = false;
-    static Email deletedMessage = null;
-    static Conversation deletedConversation = null;
+    static Email forwardedMessage = null;
+    private static boolean refreshing = false;
     private static List<Email> outboxList = new ArrayList<>();
     private static ListType currentListType = null;
     static List<Conversation> inboxList = null;
@@ -50,18 +51,26 @@ public class EmailsController {
      * every time this page loads the imageView and listView need to be set.
      *
      * The if statement explanation:
-     * The first time that this page loads, there's no server error so it should load everything.
-     * but when it loads again (by being called from other controllers) there might have
-     * been an error connecting to server (serverError is true), so if there's an error
-     * it means the lists haven't changed in the server and it should just show the list
-     * we had (which will stay the same after loading a new controller because the lists
-     * are static) but if there was no error it should load the new lists from the server
-     * again just as it would if it were the first time this page was being loaded.
+     * The first time that this page loads, it should load everything.
+     * But when it loads again (by being called from other controllers) there might have
+     * been an error connecting to server (serverError is true) so the error will be shown
+     * and the changes to the list being viewed will be made but will not be saved in the
+     * server until another change is made or the user signs out when connected to the server.
+     *
+     * If the user is forwarding a message, no changes were made since the prior viewing so
+     * all lists will be loaded as they were before.
+     *
+     * If the user refreshed the page and there was no error connecting to the server, the messages
+     *(if any) in the outbox will be sent as they should have been when connected and the lists
+     * will be downloaded from the server and shown but if there was a server error the lists will
+     * be viewed just as they were before (therefore if another user has sent them a message or if
+     * the user has sent a message in the passed time from their last refresh, they wont view
+     * those messages unless they refresh again when they have connected to te server).
      */
     public void initialize() {
         Thread t1 = new LoadInbox();
         Thread t2 = new LoadSent();
-        if (!serverError && deletedMessage == null && deletedConversation == null) {
+        if (!serverError && refreshing) {
             t1.start();
             t2.start();
         }
@@ -79,119 +88,75 @@ public class EmailsController {
                 e.getMessage();
             }
         }
+        currentProfilePicture.setClip(new Circle(40, 40, 40));
 
-        if (!serverError) {
-            if (currentListType == null || currentListType == ListType.inbox) {
-                currentListType = ListType.inbox;
-                inboxButton.setSelected(true);
-                if (deletedConversation == null) {
-                    try {
-                        t1.join();
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+        if (currentListType == null || currentListType == ListType.inbox) {
+            currentListType = ListType.inbox;
+            inboxButton.setSelected(true);
+            if (!serverError && refreshing) {
+                try {
+                    t1.join();
                 }
-                else {
-                    updateDeletedConversation();
+                catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                showConversationList(inboxList);
             }
-            else if (currentListType == ListType.sent) {
-                sentButton.setSelected(true);
-                if (deletedConversation == null) {
-                    try {
-                        t2.join();
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            showConversationList(inboxList);
+        }
+        else if (currentListType == ListType.sent) {
+            sentButton.setSelected(true);
+            if (!serverError && refreshing) {
+                try {
+                    t2.join();
                 }
-                else {
-                    updateDeletedConversation();
+                catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                showConversationList(sentList);
             }
-            else if (currentListType == ListType.inboxConv) {
-                inboxButton.setSelected(true);
-                if (deletedMessage == null) {
-                    try {
-                        t1.join();
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            showConversationList(sentList);
+        }
+        else if (currentListType == ListType.inboxConv) {
+            inboxButton.setSelected(true);
+            if (!serverError && refreshing) {
+                try {
+                    t1.join();
                 }
-                else {
-                    updateDeletedMessage();
+                catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                showMessageList(selectedConv.getMessages());
             }
-            else if (currentListType == ListType.sentConv) {
-                sentButton.setSelected(true);
-                if (deletedMessage == null) {
-                    try {
-                        t2.join();
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            showMessageList(selectedConv.getMessages());
+        }
+        else if (currentListType == ListType.sentConv) {
+            sentButton.setSelected(true);
+            if (!serverError && refreshing) {
+                try {
+                    t2.join();
                 }
-                else
-                    updateDeletedMessage();
-                showMessageList(selectedConv.getMessages());
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-            else {
+            showMessageList(selectedConv.getMessages());
+        }
+        else if (currentListType == ListType.outbox) {
+            if (!serverError && refreshing) {
                 if (outboxList.size() > 0) {
                     for (Email email : outboxList)
                         send(new Conversation(email));
                 }
                 showMessageList(null);
-                outboxButton.setSelected(true);
             }
+            else
+                showMessageList(outboxList);
+            outboxButton.setSelected(true);
         }
-        else {
+        refreshing = false;
+        if (serverError) {
             showServerError();
         }
-    }
-
-    private void updateDeletedConversation() {
-        inboxList.remove(deletedConversation);
-        sentList.remove(deletedConversation);
-        deletedConversation = null;
-    }
-
-    private void updateDeletedMessage() {
-        if (selectedConv != null && selectedConv.getMessages().size() > 1) {
-            selectedConv.getMessages().remove(deletedMessage);
-            for (int i = 0; i < inboxList.size(); i++) {
-                if (inboxList.get(i).equals(selectedConv)) {
-                    inboxList.set(i, selectedConv);
-                    break;
-                }
-            }
-            for (int i = 0; i < sentList.size(); i++) {
-                if (sentList.get(i).equals(selectedConv)) {
-                    sentList.set(i, selectedConv);
-                    break;
-                }
-            }
-            showMessageList(selectedConv.getMessages());
-        }
-        else if (selectedConv != null) {
-            inboxList.remove(selectedConv);
-            sentList.remove(selectedConv);
-            selectedConv = null;
-            if (inboxButton.isSelected())
-                showConversationList(inboxList);
-            else
-                showConversationList(sentList);
-        }
-        else {
-            outboxList.remove(deletedMessage);
-            showMessageList(outboxList);
-        }
-        deletedMessage = null;
+        if (forwardedMessage != null)
+            forwardMessage();
     }
 
     private void showServerError() {
@@ -246,6 +211,15 @@ public class EmailsController {
             currentListType = ListType.inboxConv;
         else
             currentListType = ListType.sentConv;
+        for (Email e : selectedConv.getMessages()) {
+            if (!e.isRead())
+                e.setRead(true);
+        }
+        int i = EmailsController.sentList.indexOf(selectedConv);
+        EmailsController.sentList.set(i, selectedConv);
+        i = EmailsController.inboxList.indexOf(selectedConv);
+        EmailsController.inboxList.set(i, selectedConv);
+        new MailUpdater().start();
         showMessageList(selectedConv.getMessages());
     }
 
@@ -255,7 +229,7 @@ public class EmailsController {
             ((ToggleButton) actionEvent.getSource()).setSelected(true);
             return;
         }
-        //change the list
+        //changeInfo the list
         if (actionEvent.getSource() == inboxButton) {
             sentButton.setSelected(false);
             outboxButton.setSelected(false);
@@ -299,14 +273,11 @@ public class EmailsController {
     }
 
     public void compose() {
-        if (newPane.isVisible()) {
-            composeButton.setSelected(true);
-        }
-        else {
+        composeButton.setSelected(true);
+        if (!newPane.isVisible()) {
             newPane.setVisible(true);
             sendButton.setVisible(true);
             sendButton1.setVisible(false);
-            composeButton.setSelected(true);
         }
     }
 
@@ -371,7 +342,7 @@ public class EmailsController {
     }
 
     public void closeComposePane() {
-        receiverTextField.setText("");
+        receiverTextField.setText("yo");
         subjectTextField.setText("");
         textArea.setText("");
         attachedFilesTextArea.setText("");
@@ -381,27 +352,30 @@ public class EmailsController {
         attachedFiles = new ArrayList<>();
     }
 
-    static void forwardMessage(Email email) {
-        /*newPane2.setVisible(true);
-        subjectTextField2.setText(email.getSubject());
-        textArea2.setText(email.getText());
+    private void forwardMessage() {
+        compose();
+        subjectTextField.setText(forwardedMessage.getSubject());
+        textArea.setText(forwardedMessage.getText());
         StringBuilder filesNames = new StringBuilder();
-        if (email.getFilesInfos() != null) {
-            for (FileInfo fileInfo : email.getFilesInfos())
+        if (forwardedMessage.getFilesInfos() != null) {
+            for (FileInfo fileInfo : forwardedMessage.getFilesInfos())
                 filesNames.append(fileInfo.getFileName()).append("\n");
-            attachButton2.setVisible(false);
+            attachButton.setVisible(false);
         }
-        attachedFilesTextArea2.setText(filesNames.toString());*/
+        attachedFilesTextArea.setText(filesNames.toString());
+        forwardedMessage = null;
     }
 
-    public void signOut() throws IOException {
-        new Connection(currentUser.user.getUsername()).saveListChanges(inboxList, sentList);
+    public void signOut() throws IOException, InterruptedException {
+        Thread updaterThread = new MailUpdater();
+        updaterThread.start();
+        outboxList = new ArrayList<>();
+        serverError = false;
         currentListType = null;
+        currentUser.user = null;
+        updaterThread.join();
         inboxList = null;
         sentList = null;
-        outboxList = new ArrayList<>();
-        currentUser.user = null;
-        serverError = false;
         new PageLoader().load("/SignIn.fxml");
     }
 
@@ -460,6 +434,7 @@ public class EmailsController {
     }
 
     public void refresh() throws IOException {
+        refreshing = true;
         new PageLoader().load("/Emails.fxml");
     }
 
@@ -471,7 +446,7 @@ class LoadInbox extends Thread {
     @Override
     public void run() {
         try {
-            EmailsController.inboxList = new Connection(currentUser.user.getUsername()).getList(MessageType.inbox);
+            EmailsController.inboxList = new Connection(currentUser.user.getUsername()).getList(MessageType.getInbox);
         }
         catch (IOException e) {
             EmailsController.serverError = true;
@@ -483,7 +458,7 @@ class LoadSent extends Thread {
     @Override
     public void run() {
         try {
-            EmailsController.sentList = new Connection(currentUser.user.getUsername()).getList(MessageType.sent);
+            EmailsController.sentList = new Connection(currentUser.user.getUsername()).getList(MessageType.getSent);
         }
         catch (IOException e) {
             EmailsController.serverError = true;

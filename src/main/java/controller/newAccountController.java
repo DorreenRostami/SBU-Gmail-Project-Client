@@ -22,6 +22,25 @@ public class newAccountController {
     @FXML
     public Button nextButton, backButton;
 
+    public void initialize() {
+        //making birthday text fields numeric
+        dayTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                dayTextField.setText(oldValue);
+            }
+        });
+        monthTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                monthTextField.setText(oldValue);
+            }
+        });
+        yearTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                yearTextField.setText(oldValue);
+            }
+        });
+    }
+
     public void changePage(ActionEvent actionEvent) throws IOException, ParseException {
         if (actionEvent.getSource() == backButton)
             new PageLoader().load("/SignIn.fxml");

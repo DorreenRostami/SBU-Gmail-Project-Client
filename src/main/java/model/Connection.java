@@ -24,7 +24,8 @@ public class Connection {
     public List<SignUpFeedback> settingsConnection(User user, String pass2) {
         List<SignUpFeedback> messageList = new ArrayList<>();
         try {
-            out.writeObject(new ServerMessage(MessageType.change, user, pass2));
+            out.writeObject(new ServerMessage(MessageType.changeInfo, user, pass2));
+            out.flush();
             SignUpFeedback str = null;
             while (str != SignUpFeedback.changed) {
                 str = (SignUpFeedback) in.readObject();
@@ -41,6 +42,8 @@ public class Connection {
     public void signUpConnection(User user) {
         try {
             out.writeObject(new ServerMessage(MessageType.makeAccount, user));
+            out.flush();
+            terminate();
         }
         catch (IOException e) {
             e.getMessage();
@@ -51,6 +54,7 @@ public class Connection {
         List<SignUpFeedback> messageList = new ArrayList<>();
         try {
             out.writeObject(new ServerMessage(MessageType.signUp, user, pass2));
+            out.flush();
             SignUpFeedback str = null;
             while (str != SignUpFeedback.signedUp) {
                 str = (SignUpFeedback) in.readObject();
@@ -111,31 +115,9 @@ public class Connection {
         }
     }
 
-    public void deleteConversation(Conversation conversation) {
+    public void saveListChanges(MessageType messageType, List<Conversation> list) {
         try {
-            out.writeObject(new ServerMessage(MessageType.deleteConversation, conversation));
-            out.flush();
-        }
-        catch (IOException e) {
-            e.getMessage();
-        }
-    }
-
-    public void deleteMessage(Conversation conversation, Email email) {
-        try {
-            out.writeObject(new ServerMessage(MessageType.deleteMessage, conversation, email));
-            out.flush();
-        }
-        catch (IOException e) {
-            e.getMessage();
-        }
-    }
-
-    public void saveListChanges(List<Conversation> inbox, List<Conversation> sent){
-        try {
-            out.writeObject(new ServerMessage(MessageType.updateInbox, inbox));
-            out.flush();
-            out.writeObject(new ServerMessage(MessageType.updateSent, sent));
+            out.writeObject(new ServerMessage(messageType, list));
             out.flush();
             terminate();
         }

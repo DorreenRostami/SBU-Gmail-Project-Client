@@ -1,6 +1,5 @@
 package controller;
 
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -9,14 +8,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Text;
 import model.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
 
 public class ConversationListItemController {
-    private static final String NO_PHOTO = "src/main/resources/appImages/avatar.png";
     private Conversation conversation;
 
     @FXML
@@ -27,6 +25,8 @@ public class ConversationListItemController {
     public RadioButton imp, unread;
     @FXML
     public Label starterName, textLabel;
+    @FXML
+    public Text timeText;
 
     public ConversationListItemController(Conversation conversation) throws IOException {
         this.conversation = conversation;
@@ -35,15 +35,15 @@ public class ConversationListItemController {
 
     public AnchorPane init() throws IOException {
         starterName.setText(conversation.getSender().getUsername() + "@googlemail.com");
+
         if (conversation.getSender().getImage() != null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(conversation.getSender().getImage());
             Image im = new Image(bis);
             bis.close();
             senderImage.setImage(im);
         }
-        else
-            senderImage.setImage(new Image(Paths.get(NO_PHOTO).toUri().toString()));
         senderImage.setClip(new Circle(30, 30, 30));
+
         for (Email msg : conversation.getMessages()) {
             if (!unread.isSelected() && !msg.isRead())
                 unread.setSelected(true);
@@ -52,32 +52,39 @@ public class ConversationListItemController {
             if (unread.isSelected() && imp.isSelected())
                 break;
         }
+
         textLabel.setText(conversation.getText());
+        timeText.setText(conversation.getTime());
         return root;
     }
 
     public void delete(MouseEvent mouseEvent) {
-        Task<Void> deleteTask = new Task<>() {
-            @Override
-            protected Void call() {
-                try {
-                    new Connection(currentUser.user.getUsername()).deleteConversation(conversation);
-                }
-                catch (IOException e) {
-                    EmailsController.serverError = true;
-                }
-                return null;
-            }
-        };
-        deleteTask.setOnSucceeded(e -> {
-            try {
-                EmailsController.deletedConversation = conversation;
-                new PageLoader().load("/Emails.fxml");
-            }
-            catch (IOException e1) {
-                e1.getMessage();
-            }
-        });
-        new Thread(deleteTask).start();
+        EmailsController.sentList.remove(conversation);
+        EmailsController.inboxList.remove(conversation);
+        new MailUpdater().start();
+    }
+
+    public void markImp() {
+        if (imp.isSelected())
+            conversation.getMessages().get(conversation.getMessages().size() - 1).setImp(true);
+        else
+            conversation.getMessages().get(conversation.getMessages().size() - 1).setImp(false);
+        updateConv();
+    }
+
+    public void markUnread() {
+        if (unread.isSelected())
+            conversation.getMessages().get(conversation.getMessages().size() - 1).setRead(false);
+        else
+            conversation.getMessages().get(conversation.getMessages().size() - 1).setRead(true);
+        updateConv();
+    }
+
+    private void updateConv() {
+        int i = EmailsController.sentList.indexOf(conversation);
+        EmailsController.sentList.set(i, conversation);
+        i = EmailsController.inboxList.indexOf(conversation);
+        EmailsController.inboxList.set(i, conversation);
+        new MailUpdater().start();
     }
 }
