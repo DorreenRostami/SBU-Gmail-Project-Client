@@ -70,7 +70,7 @@ public class AdditionalInfoController {
             @Override
             protected Void call() {
                 try {
-                    new Connection(currentUser.user.getUsername()).signUpConnection(currentUser.user);
+                    new Connection().signUpConnection(currentUser.user);
                 }
                 catch (IOException e) {
                     System.out.println("Server Error");

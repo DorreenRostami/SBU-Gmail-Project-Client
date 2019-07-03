@@ -118,7 +118,7 @@ public class MessageListItemController {
         new PageLoader().load("/Emails.fxml");
     }
 
-    public void deleteMessage() {
+    public void deleteMessage() throws IOException {
         if (EmailsController.selectedConv.getMessages().size() > 1) {
             EmailsController.selectedConv.getMessages().remove(message);
             updateConv();
@@ -127,11 +127,16 @@ public class MessageListItemController {
             EmailsController.sentList.remove(EmailsController.selectedConv);
             EmailsController.inboxList.remove(EmailsController.selectedConv);
             EmailsController.selectedConv = null;
+            if (EmailsController.currentListType == ListType.inboxConv)
+                EmailsController.currentListType = ListType.inbox;
+            else if (EmailsController.currentListType == ListType.sentConv)
+                EmailsController.currentListType = ListType.sent;
             new MailUpdater().start();
+            new PageLoader().load("/Emails.fxml");
         }
     }
 
-    public void markImp() {
+    public void markImp() throws IOException {
         int i = EmailsController.selectedConv.getMessages().indexOf(message);
         if (imp.isSelected())
             message.setImp(true);
@@ -141,7 +146,7 @@ public class MessageListItemController {
         updateConv();
     }
 
-    public void markUnread() {
+    public void markUnread() throws IOException {
         int i = EmailsController.selectedConv.getMessages().indexOf(message);
         if (unread.isSelected())
             message.setRead(false);
@@ -151,11 +156,14 @@ public class MessageListItemController {
         updateConv();
     }
 
-    private void updateConv() {
+    private void updateConv() throws IOException {
         int i = EmailsController.sentList.indexOf(EmailsController.selectedConv);
-        EmailsController.sentList.set(i, EmailsController.selectedConv);
+        if (i > 0)
+            EmailsController.sentList.set(i, EmailsController.selectedConv);
         i = EmailsController.inboxList.indexOf(EmailsController.selectedConv);
-        EmailsController.inboxList.set(i, EmailsController.selectedConv);
+        if (i > 0)
+            EmailsController.inboxList.set(i, EmailsController.selectedConv);
         new MailUpdater().start();
+        new PageLoader().load("/Emails.fxml");
     }
 }

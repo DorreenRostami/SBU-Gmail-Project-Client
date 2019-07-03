@@ -1,6 +1,6 @@
 package model;
 
-public enum SignUpFeedback {
+public enum InfoFeedback {
     /**
      * when the user hasn't entered their full name
      */

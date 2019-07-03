@@ -27,7 +27,7 @@ public class EmailsController {
     static Email forwardedMessage = null;
     private static boolean refreshing = false;
     private static List<Email> outboxList = new ArrayList<>();
-    private static ListType currentListType = null;
+    static ListType currentListType = null;
     static List<Conversation> inboxList = null;
     static List<Conversation> sentList = null;
     static Conversation selectedConv = null;
@@ -42,10 +42,12 @@ public class EmailsController {
     @FXML public TextField receiverTextField, subjectTextField, searchBar;
     @FXML public TextArea textArea, attachedFilesTextArea;
     @FXML public Text sizeWarning, serverErrorText;
-    @FXML public Button sendButton, sendButton1, cancelButton, attachButton, searchButton;
+    @FXML public Button sendButton, sendButton1, cancelButton, attachButton,
+            searchButton, replyButton, blockButton, unblockButton;
     @FXML public AnchorPane conversationMessagesPane;
     @FXML public ImageView currentProfilePicture, settingsIcon, refreshIcon;
     @FXML public RadioButton searchByUser, searchBySubject;
+    @FXML public Label subjectLabel;
 
     /**
      * every time this page loads the imageView and listView need to be set.
@@ -53,7 +55,7 @@ public class EmailsController {
      * The if statement explanation:
      * The first time that this page loads, it should load everything.
      * But when it loads again (by being called from other controllers) there might have
-     * been an error connecting to server (serverError is true) so the error will be shown
+     * been an error connecting to the server (serverError is true) so the error will be shown
      * and the changes to the list being viewed will be made but will not be saved in the
      * server until another change is made or the user signs out when connected to the server.
      *
@@ -61,16 +63,16 @@ public class EmailsController {
      * all lists will be loaded as they were before.
      *
      * If the user refreshed the page and there was no error connecting to the server, the messages
-     *(if any) in the outbox will be sent as they should have been when connected and the lists
-     * will be downloaded from the server and shown but if there was a server error the lists will
+     *(if any) in the outbox will be sent as they would have been when connected and the lists
+     * will be downloaded from the server and shown but if there was a server error, the lists will
      * be viewed just as they were before (therefore if another user has sent them a message or if
-     * the user has sent a message in the passed time from their last refresh, they wont view
+     * the user has sent a message in the time passed since their last refresh, they wont view
      * those messages unless they refresh again when they have connected to te server).
      */
     public void initialize() {
         Thread t1 = new LoadInbox();
         Thread t2 = new LoadSent();
-        if (!serverError && refreshing) {
+        if (!serverError && (currentListType == null || refreshing)) {
             t1.start();
             t2.start();
         }
@@ -93,7 +95,7 @@ public class EmailsController {
         if (currentListType == null || currentListType == ListType.inbox) {
             currentListType = ListType.inbox;
             inboxButton.setSelected(true);
-            if (!serverError && refreshing) {
+            if (!serverError) {
                 try {
                     t1.join();
                 }
@@ -105,7 +107,7 @@ public class EmailsController {
         }
         else if (currentListType == ListType.sent) {
             sentButton.setSelected(true);
-            if (!serverError && refreshing) {
+            if (!serverError) {
                 try {
                     t2.join();
                 }
@@ -117,7 +119,7 @@ public class EmailsController {
         }
         else if (currentListType == ListType.inboxConv) {
             inboxButton.setSelected(true);
-            if (!serverError && refreshing) {
+            if (!serverError) {
                 try {
                     t1.join();
                 }
@@ -129,7 +131,7 @@ public class EmailsController {
         }
         else if (currentListType == ListType.sentConv) {
             sentButton.setSelected(true);
-            if (!serverError && refreshing) {
+            if (!serverError) {
                 try {
                     t2.join();
                 }
@@ -177,9 +179,9 @@ public class EmailsController {
             convosListView.setPlaceholder(new Label("No Conversation"));
         }
         else {
-            List<Conversation> copy = new ArrayList<>(list);
-            Collections.reverse(copy);
-            convosListView.setItems(FXCollections.observableArrayList(copy));
+//            List<Conversation> copy = new ArrayList<>(list);
+//            Collections.reverse(copy);
+            convosListView.setItems(FXCollections.observableArrayList(list));
             convosListView.setCellFactory(conversationListView -> new ConversationListItem());
         }
     }
@@ -187,12 +189,29 @@ public class EmailsController {
     private void showMessageList(List<Email> list) {
         convosListView.setVisible(false);
         messagesListView.setVisible(true);
-        conversationMessagesPane.setVisible(true);
+        if (currentListType != ListType.outbox)
+            conversationMessagesPane.setVisible(true);
         if (list == null || list.size() == 0) {
             messagesListView.getItems().clear();
             messagesListView.setPlaceholder(new Label("No Messages"));
         }
         else {
+            if (currentListType != ListType.outbox) {
+                for (int i = 0; i < list.size(); i++) {
+                    if (currentUser.user.getBlockedUsers() != null &&
+                            currentUser.user.getBlockedUsers().contains(list.get(i).getSender().getUsername())) {
+                        blockButton.setVisible(false);
+                        unblockButton.setVisible(true);
+                        break;
+                    }
+                    if (currentUser.user.getBlockedUsers() == null || i == list.size() - 1) {
+                        blockButton.setVisible(true);
+                        unblockButton.setVisible(false);
+                        break;
+                    }
+                }
+                subjectLabel.setText(selectedConv.getMessages().get(0).getSubject());
+            }
             messagesListView.setItems(FXCollections.observableArrayList(list));
             messagesListView.setCellFactory(messagesListView -> new MessageListItem());
         }
@@ -212,13 +231,14 @@ public class EmailsController {
         else
             currentListType = ListType.sentConv;
         for (Email e : selectedConv.getMessages()) {
-            if (!e.isRead())
-                e.setRead(true);
+            e.setRead(true);
         }
         int i = EmailsController.sentList.indexOf(selectedConv);
-        EmailsController.sentList.set(i, selectedConv);
+        if (i > 0)
+            EmailsController.sentList.set(i, selectedConv);
         i = EmailsController.inboxList.indexOf(selectedConv);
-        EmailsController.inboxList.set(i, selectedConv);
+        if (i > 0)
+            EmailsController.inboxList.set(i, selectedConv);
         new MailUpdater().start();
         showMessageList(selectedConv.getMessages());
     }
@@ -255,7 +275,7 @@ public class EmailsController {
             @Override
             protected Void call() {
                 try {
-                    new Connection(currentUser.user.getUsername()).sendMail(conversation);
+                    new Connection().sendMail(conversation);
                 }
                 catch (IOException e) {
                     serverError = true;
@@ -342,7 +362,7 @@ public class EmailsController {
     }
 
     public void closeComposePane() {
-        receiverTextField.setText("yo");
+        receiverTextField.setText("");
         subjectTextField.setText("");
         textArea.setText("");
         attachedFilesTextArea.setText("");
@@ -438,7 +458,36 @@ public class EmailsController {
         new PageLoader().load("/Emails.fxml");
     }
 
-    public void block(ActionEvent actionEvent) {
+    public void block() {
+        String otherUser = selectedConv.getMessages().get(0).getReceiver().equals(currentUser.user.getUsername()) ?
+                selectedConv.getMessages().get(0).getSender().getUsername() :
+                selectedConv.getMessages().get(0).getReceiver();
+        try {
+            new Connection().handleBlock(MessageType.block, otherUser);
+            blockButton.setVisible(false);
+            unblockButton.setVisible(true);
+            currentUser.user.addBlockedUser(otherUser);
+        }
+        catch (IOException e) {
+            serverError = true;
+            showServerError();
+        }
+    }
+
+    public void unblock() {
+        String otherUser = selectedConv.getMessages().get(0).getReceiver().equals(currentUser.user.getUsername()) ?
+                selectedConv.getMessages().get(0).getSender().getUsername() :
+                selectedConv.getMessages().get(0).getReceiver();
+        try {
+            new Connection().handleBlock(MessageType.unblock, otherUser);
+            blockButton.setVisible(true);
+            unblockButton.setVisible(false);
+            currentUser.user.removeBlockedUser(otherUser);
+        }
+        catch (IOException e) {
+            serverError = true;
+            showServerError();
+        }
     }
 }
 
@@ -446,7 +495,7 @@ class LoadInbox extends Thread {
     @Override
     public void run() {
         try {
-            EmailsController.inboxList = new Connection(currentUser.user.getUsername()).getList(MessageType.getInbox);
+            EmailsController.inboxList = new Connection().getList(MessageType.inbox);
         }
         catch (IOException e) {
             EmailsController.serverError = true;
@@ -458,7 +507,7 @@ class LoadSent extends Thread {
     @Override
     public void run() {
         try {
-            EmailsController.sentList = new Connection(currentUser.user.getUsername()).getList(MessageType.getSent);
+            EmailsController.sentList = new Connection().getList(MessageType.sent);
         }
         catch (IOException e) {
             EmailsController.serverError = true;

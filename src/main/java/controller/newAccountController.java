@@ -48,45 +48,45 @@ public class newAccountController {
             resetWarnings();
 
             //establish a connection with the server to check if given information is valid
-            Connection c = new Connection(usernameTextField.getText());
+            Connection c = new Connection();
             String birthday = dayTextField.getText() + "/" + monthTextField.getText() + "/" + yearTextField.getText();
             User user = new User(firstNameTextField.getText(), lastNameTextField.getText(), birthday,
                     usernameTextField.getText(), passwordField.getText());
-            List<SignUpFeedback> feedback = c.signUpConnection(user, passwordField2.getText());
+            List<InfoFeedback> feedback = c.signUpConnection(user, passwordField2.getText());
 
             //check if user is signed up or not (and why they aren't)
-            if (feedback.contains(SignUpFeedback.signedUp)) {
+            if (feedback.contains(InfoFeedback.signedUp)) {
                 currentUser.user = user;
                 new PageLoader().load("/AdditionalInfo.fxml");
             }
             else {
-                if (feedback.contains(SignUpFeedback.fullName))
+                if (feedback.contains(InfoFeedback.fullName))
                     nameWarning.setVisible(true);
-                if (feedback.contains(SignUpFeedback.birthday))
+                if (feedback.contains(InfoFeedback.birthday))
                     birthdayWarning.setVisible(true);
-                else if (feedback.contains(SignUpFeedback.young))
+                else if (feedback.contains(InfoFeedback.young))
                     youngWarning.setVisible(true);
-                if (feedback.contains(SignUpFeedback.enterUsername))
+                if (feedback.contains(InfoFeedback.enterUsername))
                     enterUsernameWarning.setVisible(true);
                 else {
-                    if (feedback.contains(SignUpFeedback.badUsername)) {
+                    if (feedback.contains(InfoFeedback.badUsername)) {
                         usernameCharText.setVisible(false);
                         usernameCharWarning.setVisible(true);
                     }
-                     else if (feedback.contains(SignUpFeedback.takenUsername)) {
+                     else if (feedback.contains(InfoFeedback.takenUsername)) {
                          usernameTakenWarning.setVisible(true);
                      }
                 }
-                if (feedback.contains(SignUpFeedback.shortPass)) {
+                if (feedback.contains(InfoFeedback.shortPass)) {
                     passwordLengthText.setVisible(false);
                     passwordLengthWarning.setVisible(true);
                 }
                 else {
-                    if (feedback.contains(SignUpFeedback.badPass)) {
+                    if (feedback.contains(InfoFeedback.badPass)) {
                         passwordCharText.setVisible(false);
                         passwordCharWarning.setVisible(true);
                     }
-                    else if (feedback.contains(SignUpFeedback.mismatchedPass))
+                    else if (feedback.contains(InfoFeedback.mismatchedPass))
                         passwordMatchWarning.setVisible(true);
                 }
             }

@@ -30,10 +30,9 @@ public class SignInController {
 
     public void changePage(ActionEvent actionEvent) throws IOException {
         if (actionEvent.getSource() == signInButton) {
-            Connection c = new Connection(emailTextField.getText());
             String pass = passwordTextField.getText().length() == 0 ?
                     passwordField.getText() : passwordTextField.getText();
-            boolean signedIn = c.signInConnection(pass);
+            boolean signedIn = new Connection().signInConnection(emailTextField.getText(), pass);
             if (signedIn) {
                 wrongLabel.setVisible(false);
                 new PageLoader().load("/Emails.fxml");

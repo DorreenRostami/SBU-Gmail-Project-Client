@@ -9,26 +9,24 @@ public class Connection {
     private static final int requestPort = 8080;
     private static final String serverIP = "localhost";
 
-    private String username;
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    public Connection(String username) throws IOException {
-        this.username = username;
+    public Connection() throws IOException {
         socket = new Socket(serverIP, requestPort);
         out = new ObjectOutputStream(socket.getOutputStream());
         in = new ObjectInputStream(socket.getInputStream());
     }
 
-    public List<SignUpFeedback> settingsConnection(User user, String pass2) {
-        List<SignUpFeedback> messageList = new ArrayList<>();
+    public List<InfoFeedback> settingsConnection(User user, String pass2) {
+        List<InfoFeedback> messageList = new ArrayList<>();
         try {
             out.writeObject(new ServerMessage(MessageType.changeInfo, user, pass2));
             out.flush();
-            SignUpFeedback str = null;
-            while (str != SignUpFeedback.changed) {
-                str = (SignUpFeedback) in.readObject();
+            InfoFeedback str = null;
+            while (str != InfoFeedback.changed) {
+                str = (InfoFeedback) in.readObject();
                 messageList.add(str);
             }
             terminate();
@@ -50,14 +48,14 @@ public class Connection {
         }
     }
 
-    public List<SignUpFeedback> signUpConnection (User user, String pass2) {
-        List<SignUpFeedback> messageList = new ArrayList<>();
+    public List<InfoFeedback> signUpConnection (User user, String pass2) {
+        List<InfoFeedback> messageList = new ArrayList<>();
         try {
             out.writeObject(new ServerMessage(MessageType.signUp, user, pass2));
             out.flush();
-            SignUpFeedback str = null;
-            while (str != SignUpFeedback.signedUp) {
-                str = (SignUpFeedback) in.readObject();
+            InfoFeedback str = null;
+            while (str != InfoFeedback.signedUp) {
+                str = (InfoFeedback) in.readObject();
                 messageList.add(str);
             }
             terminate();
@@ -68,7 +66,7 @@ public class Connection {
         return messageList;
     }
 
-    public boolean signInConnection (String password) {
+    public boolean signInConnection (String username, String password) {
         try {
             out.writeObject(new ServerMessage(MessageType.signIn, new User(username, password)));
             out.flush();
@@ -88,7 +86,7 @@ public class Connection {
     public List<Conversation> getList (MessageType listType) {
         List<Conversation> list = null;
         try {
-            out.writeObject(new ServerMessage(listType, new User(username, "")));
+            out.writeObject(new ServerMessage(listType, currentUser.user));
             out.flush();
             list = (List<Conversation>) in.readObject();
             terminate();
@@ -118,6 +116,17 @@ public class Connection {
     public void saveListChanges(MessageType messageType, List<Conversation> list) {
         try {
             out.writeObject(new ServerMessage(messageType, list));
+            out.flush();
+            terminate();
+        }
+        catch (IOException e) {
+            e.getMessage();
+        }
+    }
+
+    public void handleBlock(MessageType messageType, String blockedUser) {
+        try {
+            out.writeObject(new ServerMessage(messageType, currentUser.user, blockedUser));
             out.flush();
             terminate();
         }

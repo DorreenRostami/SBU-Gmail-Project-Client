@@ -88,35 +88,34 @@ public class SettingsController {
             String newPass = oldPasswordField.getText().length() > 0 ? newPasswordField.getText() : currentUser.user.getPassword();
 
             //establish a connection with the server to check if given information is valid
-            Connection c = new Connection(currentUser.user.getUsername());
             String birthday = dayTextField.getText() + "/" + monthTextField.getText() + "/" + yearTextField.getText();
             User user = new User(firstNameTextField.getText(), lastNameTextField.getText(), birthday,
                     currentUser.user.getUsername(), newPass);
             user.setGender(choiceBox.getValue());
             user.setMobile(mobileTextField.getText());
             user.setImage(chosenImage);
-            List<SignUpFeedback> feedback = c.settingsConnection(user, newPasswordField2.getText());
-            if (feedback.contains(SignUpFeedback.changed)) {
+            List<InfoFeedback> feedback = new Connection().settingsConnection(user, newPasswordField2.getText());
+            if (feedback.contains(InfoFeedback.changed)) {
                 currentUser.user = user;
                 new PageLoader().load("/Emails.fxml");
             }
             else {
-                if (feedback.contains(SignUpFeedback.fullName))
+                if (feedback.contains(InfoFeedback.fullName))
                     nameWarning.setVisible(true);
-                if (feedback.contains(SignUpFeedback.birthday))
+                if (feedback.contains(InfoFeedback.birthday))
                     birthdayWarning.setVisible(true);
-                else if (feedback.contains(SignUpFeedback.young))
+                else if (feedback.contains(InfoFeedback.young))
                     youngWarning.setVisible(true);
-                if (feedback.contains(SignUpFeedback.shortPass)) {
+                if (feedback.contains(InfoFeedback.shortPass)) {
                     passwordLengthText.setVisible(false);
                     passwordLengthWarning.setVisible(true);
                 }
                 else {
-                    if (feedback.contains(SignUpFeedback.badPass)) {
+                    if (feedback.contains(InfoFeedback.badPass)) {
                         passwordCharText.setVisible(false);
                         passwordCharWarning.setVisible(true);
                     }
-                    else if (feedback.contains(SignUpFeedback.mismatchedPass))
+                    else if (feedback.contains(InfoFeedback.mismatchedPass))
                         passwordMatchWarning.setVisible(true);
                 }
             }
