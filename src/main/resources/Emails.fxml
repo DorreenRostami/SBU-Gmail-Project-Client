@@ -18,9 +18,9 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane minHeight="200.0" minWidth="600.0" prefHeight="700.0" prefWidth="900.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.EmailsController">
+<AnchorPane minHeight="200.0" minWidth="600.0" prefHeight="700.0" prefWidth="900.0" style="-fx-background-color: #e1f7ef;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.EmailsController">
    <children>
-      <ListView fx:id="convosListView" layoutX="230.0" layoutY="100.0" onMouseClicked="#select" prefHeight="570.0" prefWidth="630.0" style="-fx-border-color: grey;" AnchorPane.bottomAnchor="29.600000000000023" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="39.60000000000002" AnchorPane.topAnchor="100.0" />
+      <ListView fx:id="convosListView" layoutX="230.0" layoutY="100.0" onMouseClicked="#select" prefHeight="570.0" prefWidth="630.0" style="-fx-border-color: grey;" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="100.0" />
       <ListView fx:id="messagesListView" layoutX="230.0" layoutY="160.0" onMouseClicked="#select" prefHeight="510.0" prefWidth="630.0" style="-fx-border-color: grey;" visible="false" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="160.0" />
       <VBox layoutX="14.0" layoutY="241.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="100.0">
          <children>
@@ -46,7 +46,7 @@
             <ToggleButton fx:id="outboxButton" layoutX="11.0" layoutY="111.0" mnemonicParsing="false" onMouseClicked="#changeList" prefHeight="40.0" prefWidth="200.0" style="-fx-border-color: grey; -fx-border-radius: 0;" text="Outbox" textFill="#27bfc5" />
          </children>
       </VBox>
-      <TitledPane fx:id="newPane" alignment="TOP_CENTER" animated="false" collapsible="false" layoutX="15.0" layoutY="319.0" minHeight="300.0" minWidth="400.0" prefHeight="350.0" prefWidth="400.0" style="-fx-border-color: grey;" text="New Message" visible="false">
+      <TitledPane fx:id="newPane" alignment="TOP_CENTER" animated="false" collapsible="false" layoutX="15.0" layoutY="319.0" minHeight="300.0" minWidth="400.0" prefHeight="350.0" prefWidth="400.0" style="-fx-border-color: grey;" text="New Message" visible="false" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="15.0">
         <content>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white;">
                <children>
@@ -73,7 +73,7 @@
             <Font size="14.0" />
          </font>
       </Text>
-      <AnchorPane fx:id="conversationMessagesPane" layoutX="230.0" layoutY="100.0" prefHeight="60.0" prefWidth="630.0" style="-fx-background-color: black; -fx-border-color: grey;">
+      <AnchorPane fx:id="conversationMessagesPane" layoutX="230.0" layoutY="100.0" prefHeight="60.0" prefWidth="630.0" style="-fx-background-color: black; -fx-border-color: grey;" visible="false">
          <children>
             <Button fx:id="backToConvButton" layoutX="14.0" layoutY="18.0" mnemonicParsing="false" onAction="#backToConvList" text="Back" />
             <Label fx:id="subjectLabel" layoutX="75.0" layoutY="16.0" prefHeight="27.0" prefWidth="266.0" text="Subject" textFill="WHITE" underline="true">
@@ -81,30 +81,31 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <Button fx:id="replyButton" layoutX="492.0" layoutY="18.0" mnemonicParsing="false" onAction="#reply" text="Reply" />
-            <Button fx:id="blockButton" layoutX="544.0" layoutY="18.0" mnemonicParsing="false" onAction="#block" text="Block User" />
+            <Button fx:id="replyButton" layoutX="471.0" layoutY="18.0" mnemonicParsing="false" onAction="#reply" text="Reply" />
+            <Button fx:id="blockButton" layoutX="534.0" layoutY="18.0" mnemonicParsing="false" onAction="#block" text="Block User" />
+            <Button fx:id="unblockButton" layoutX="528.0" layoutY="18.0" mnemonicParsing="false" onAction="#unblock" text="Unblock User" visible="false" />
          </children>
       </AnchorPane>
-      <Button fx:id="backToSignInButton" layoutX="15.0" layoutY="14.0" mnemonicParsing="false" onAction="#signOut" text="Sign Out" />
-      <ImageView fx:id="currentProfilePicture" fitHeight="70.0" fitWidth="70.0" layoutX="804.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+      <Button fx:id="backToSignInButton" layoutX="15.0" layoutY="14.0" mnemonicParsing="false" onAction="#signOut" text="Sign Out" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="14.0" />
+      <ImageView fx:id="currentProfilePicture" fitHeight="70.0" fitWidth="70.0" layoutX="804.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="26.42945098876953" AnchorPane.topAnchor="14.0">
          <image>
             <Image url="@appImages/avatar.png" />
          </image>
       </ImageView>
-      <ImageView fx:id="settingsIcon" fitHeight="30.0" fitWidth="30.0" layoutX="750.0" layoutY="34.0" onMouseClicked="#goToSettings" pickOnBounds="true" preserveRatio="true">
+      <ImageView fx:id="settingsIcon" fitHeight="30.0" fitWidth="30.0" layoutX="750.0" layoutY="34.0" onMouseClicked="#goToSettings" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="34.0">
          <image>
             <Image url="@appImages/settingIcon.png" />
          </image>
       </ImageView>
-      <TextField fx:id="searchBar" layoutX="309.0" layoutY="20.0" prefHeight="35.0" prefWidth="350.0" promptText="Search Bar">
+      <TextField fx:id="searchBar" layoutX="309.0" layoutY="20.0" prefHeight="35.0" prefWidth="350.0" promptText="Search Bar" AnchorPane.leftAnchor="309.0" AnchorPane.rightAnchor="240.60000000000002" AnchorPane.topAnchor="20.0">
          <font>
             <Font size="14.0" />
          </font>
       </TextField>
-      <RadioButton fx:id="searchByUser" layoutX="169.0" layoutY="20.0" mnemonicParsing="false" onAction="#selectSearchFilter" selected="true" text="Search By User" />
-      <RadioButton fx:id="searchBySubject" layoutX="169.0" layoutY="42.0" mnemonicParsing="false" onAction="#selectSearchFilter" text="Search By Subject" />
-      <Button fx:id="searchButton" layoutX="670.0" layoutY="23.0" mnemonicParsing="false" onAction="#search" text="Search" />
-      <ImageView fx:id="refreshIcon" fitHeight="26.0" fitWidth="30.0" layoutX="83.0" layoutY="14.0" onMouseClicked="#refresh" pickOnBounds="true" preserveRatio="true">
+      <RadioButton fx:id="searchByUser" layoutX="169.0" layoutY="20.0" mnemonicParsing="false" onAction="#selectSearchFilter" selected="true" text="Search By User" AnchorPane.leftAnchor="169.0" AnchorPane.topAnchor="20.0" />
+      <RadioButton fx:id="searchBySubject" layoutX="169.0" layoutY="42.0" mnemonicParsing="false" onAction="#selectSearchFilter" text="Search By Subject" AnchorPane.leftAnchor="169.0" AnchorPane.topAnchor="42.0" />
+      <Button fx:id="searchButton" layoutX="670.0" layoutY="23.0" mnemonicParsing="false" onAction="#search" text="Search" AnchorPane.rightAnchor="178.0" AnchorPane.topAnchor="23.0" />
+      <ImageView fx:id="refreshIcon" fitHeight="26.0" fitWidth="30.0" layoutX="83.0" layoutY="14.0" onMouseClicked="#refresh" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="83.0" AnchorPane.topAnchor="14.0">
          <image>
             <Image url="@appImages/refresh.png" />
          </image>

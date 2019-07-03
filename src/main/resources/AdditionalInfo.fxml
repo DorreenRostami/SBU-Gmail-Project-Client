@@ -29,7 +29,7 @@
          <children>
             <ImageView fx:id="image" fitHeight="150.0" fitWidth="150.0" layoutX="125.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../resources/images/avatar.png" />
+                  <Image url="@appImages/avatar.png" />
                </image>
             </ImageView>
             <Button fx:id="chooseButton" layoutX="147.0" layoutY="174.0" mnemonicParsing="false" onAction="#openFileChooser" text="Choose a picture" />

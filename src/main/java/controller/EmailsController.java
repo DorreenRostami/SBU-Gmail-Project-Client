@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class EmailsController {
-    static boolean serverError = false;
     static Email forwardedMessage = null;
-    private static boolean refreshing = false;
-    private static List<Email> outboxList = new ArrayList<>();
     static ListType currentListType = null;
     static List<Conversation> inboxList = null;
     static List<Conversation> sentList = null;
     static Conversation selectedConv = null;
+    static boolean serverError = false;
+    private static boolean refreshing = false;
+    private static List<Email> outboxList = new ArrayList<>();
 
     private List<FileInfo> attachedFiles = new ArrayList<>();
     private long GB = 2;
@@ -69,7 +69,7 @@ public class EmailsController {
      * the user has sent a message in the time passed since their last refresh, they wont view
      * those messages unless they refresh again when they have connected to te server).
      */
-    public void initialize() {
+    public void initialize() throws InterruptedException {
         Thread t1 = new LoadInbox();
         Thread t2 = new LoadSent();
         if (!serverError && (currentListType == null || refreshing)) {
@@ -96,48 +96,28 @@ public class EmailsController {
             currentListType = ListType.inbox;
             inboxButton.setSelected(true);
             if (!serverError) {
-                try {
-                    t1.join();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                t1.join();
             }
             showConversationList(inboxList);
         }
         else if (currentListType == ListType.sent) {
             sentButton.setSelected(true);
             if (!serverError) {
-                try {
-                    t2.join();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                t2.join();
             }
             showConversationList(sentList);
         }
         else if (currentListType == ListType.inboxConv) {
             inboxButton.setSelected(true);
             if (!serverError) {
-                try {
-                    t1.join();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                t1.join();
             }
             showMessageList(selectedConv.getMessages());
         }
         else if (currentListType == ListType.sentConv) {
             sentButton.setSelected(true);
             if (!serverError) {
-                try {
-                    t2.join();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                t2.join();
             }
             showMessageList(selectedConv.getMessages());
         }
@@ -224,7 +204,7 @@ public class EmailsController {
         GB /= 4;
     }
 
-    public void select() {
+    public void select() throws IOException {
         selectedConv = convosListView.getSelectionModel().getSelectedItem();
         if (currentListType == ListType.inbox)
             currentListType = ListType.inboxConv;
@@ -240,7 +220,7 @@ public class EmailsController {
         if (i > 0)
             EmailsController.inboxList.set(i, selectedConv);
         new MailUpdater().start();
-        showMessageList(selectedConv.getMessages());
+        new PageLoader().load("/Emails.fxml");
     }
 
     public void changeList(MouseEvent actionEvent) {
@@ -315,11 +295,15 @@ public class EmailsController {
         sendButton1.setVisible(true);
         String receiver = "";
         for (Email e : selectedConv.getMessages()) {
-            if (!e.getSender().equals(currentUser.user))
+            if (!e.getSender().equals(currentUser.user)) {
                 receiver = e.getSender().getUsername();
+                break;
+            }
         }
         receiverTextField.setText(receiver);
         receiverTextField.setEditable(false);
+        subjectTextField.setText(selectedConv.getMessages().get(0).getSubject());
+        subjectTextField.setEditable(false);
     }
 
     public void sendReply() {
@@ -369,6 +353,7 @@ public class EmailsController {
         newPane.setVisible(false);
         composeButton.setSelected(false);
         receiverTextField.setEditable(true);
+        subjectTextField.setEditable(true);
         attachedFiles = new ArrayList<>();
     }
 
@@ -401,10 +386,14 @@ public class EmailsController {
 
     public void backToConvList() {
         selectedConv = null;
-        if (inboxButton.isSelected())
+        if (inboxButton.isSelected()) {
             showConversationList(inboxList);
-        else
+            currentListType = ListType.inbox;
+        }
+        else {
             showConversationList(sentList);
+            currentListType = ListType.sent;
+        }
     }
 
     public void goToSettings() throws IOException {

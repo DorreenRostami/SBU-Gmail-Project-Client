@@ -30,7 +30,7 @@ public class AdditionalInfoController {
                 mobileTextField.setText(oldValue);
             }
         });
-        image.setClip(new Circle(70, 70, 70));
+        image.setClip(new Circle(75, 70, 70));
     }
 
     public void openFileChooser() throws IOException {
