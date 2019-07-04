@@ -17,8 +17,8 @@ public class newAccountController {
     @FXML
     public PasswordField passwordField, passwordField2;
     @FXML
-    public Text nameWarning, enterUsernameWarning, usernameCharText, usernameCharWarning, usernameTakenWarning, passwordLengthText, passwordLengthWarning,
-            passwordCharText, passwordCharWarning, birthdayWarning, passwordMatchWarning, youngWarning;
+    public Text nameWarning, enterUsernameWarning, usernameCharText, usernameCharWarning, usernameTakenWarning, passwordLengthText,
+            passwordLengthWarning, passwordCharText, passwordCharWarning, birthdayWarning, passwordMatchWarning, youngWarning;
     @FXML
     public Button nextButton, backButton;
 
@@ -73,9 +73,9 @@ public class newAccountController {
                         usernameCharText.setVisible(false);
                         usernameCharWarning.setVisible(true);
                     }
-                     else if (feedback.contains(InfoFeedback.takenUsername)) {
-                         usernameTakenWarning.setVisible(true);
-                     }
+                    else if (feedback.contains(InfoFeedback.takenUsername)) {
+                        usernameTakenWarning.setVisible(true);
+                    }
                 }
                 if (feedback.contains(InfoFeedback.shortPass)) {
                     passwordLengthText.setVisible(false);

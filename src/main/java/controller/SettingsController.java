@@ -71,8 +71,9 @@ public class SettingsController {
         dayTextField.setText(bday[0]);
         monthTextField.setText(bday[1]);
         yearTextField.setText(bday[2]);
-        mobileTextField.setText(currentUser.user.getMobile());
-        choiceBox.setValue(currentUser.user.getGender());
+        mobileTextField.setText(currentUser.user.getMobile() == null ? "" : currentUser.user.getMobile());
+        if (currentUser.user.getGender() != null)
+            choiceBox.setValue(currentUser.user.getGender());
     }
 
     public void changePage(ActionEvent actionEvent) throws IOException {
@@ -80,6 +81,8 @@ public class SettingsController {
             new PageLoader().load("/Emails.fxml");
         else if (actionEvent.getSource() == saveButton) {
             resetWarnings();
+            System.out.println(currentUser.user.getPassword());
+            System.out.println(oldPasswordField.getText());
             if (oldPasswordField.getText().length() > 0 && !currentUser.user.getPassword().equals(oldPasswordField.getText())){
                 wrongPassWarning.setVisible(true);
                 return;
@@ -94,7 +97,7 @@ public class SettingsController {
             user.setGender(choiceBox.getValue());
             user.setMobile(mobileTextField.getText());
             user.setImage(chosenImage);
-            List<InfoFeedback> feedback = new Connection().settingsConnection(user, newPasswordField2.getText());
+            List<InfoFeedback> feedback = new Connection().settingsConnection(user, "changed-" + newPasswordField2.getText());
             if (feedback.contains(InfoFeedback.changed)) {
                 currentUser.user = user;
                 new PageLoader().load("/Emails.fxml");

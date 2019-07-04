@@ -29,8 +29,10 @@ public class EmailsController {
     static List<Conversation> sentList = null;
     static Conversation selectedConv = null;
     static boolean serverError = false;
+
     private static boolean refreshing = false;
     private static List<Email> outboxList = new ArrayList<>();
+    private static Image profilePicture = null;
 
     private List<FileInfo> attachedFiles = new ArrayList<>();
     private long GB = 2;
@@ -79,16 +81,18 @@ public class EmailsController {
 
         calculate();
 
-        if (currentUser.user.getImage() != null) {
+        if (currentUser.user.getImage() != null && profilePicture == null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(currentUser.user.getImage());
-            Image im = new Image(bis);
-            currentProfilePicture.setImage(im);
+            profilePicture = new Image(bis);
+            currentProfilePicture.setImage(profilePicture);
             try {
                 bis.close();
             }
             catch (IOException e) {
                 e.getMessage();
             }
+        } else if (profilePicture != null) {
+            currentProfilePicture.setImage(profilePicture);
         }
         currentProfilePicture.setClip(new Circle(40, 40, 40));
 
@@ -126,11 +130,10 @@ public class EmailsController {
                 if (outboxList.size() > 0) {
                     for (Email email : outboxList)
                         send(new Conversation(email));
+                    outboxList = new ArrayList<>();
                 }
-                showMessageList(null);
             }
-            else
-                showMessageList(outboxList);
+            showMessageList(outboxList);
             outboxButton.setSelected(true);
         }
         refreshing = false;
@@ -143,7 +146,7 @@ public class EmailsController {
 
     private void showServerError() {
         serverErrorText.setVisible(true);
-        FadeTransition ft = new FadeTransition(Duration.millis(3000), serverErrorText);
+        FadeTransition ft = new FadeTransition(Duration.millis(5000), serverErrorText);
         ft.setFromValue(1);
         ft.setToValue(0);
         ft.playFromStart();
@@ -152,23 +155,27 @@ public class EmailsController {
 
     private void showConversationList(List<Conversation> list) {
         convosListView.setVisible(true);
+        convosListView.setDisable(false);
         messagesListView.setVisible(false);
+        messagesListView.setDisable(true);
         conversationMessagesPane.setVisible(false);
         if (list == null || list.size() == 0) {
             convosListView.getItems().clear();
             convosListView.setPlaceholder(new Label("No Conversation"));
         }
         else {
-//            List<Conversation> copy = new ArrayList<>(list);
-//            Collections.reverse(copy);
-            convosListView.setItems(FXCollections.observableArrayList(list));
+            List<Conversation> copy = new ArrayList<>(list);
+            Collections.reverse(copy);
+            convosListView.setItems(FXCollections.observableArrayList(copy));
             convosListView.setCellFactory(conversationListView -> new ConversationListItem());
         }
     }
 
     private void showMessageList(List<Email> list) {
         convosListView.setVisible(false);
+        convosListView.setDisable(true);
         messagesListView.setVisible(true);
+        messagesListView.setDisable(false);
         if (currentListType != ListType.outbox)
             conversationMessagesPane.setVisible(true);
         if (list == null || list.size() == 0) {
@@ -178,13 +185,13 @@ public class EmailsController {
         else {
             if (currentListType != ListType.outbox) {
                 for (int i = 0; i < list.size(); i++) {
-                    if (currentUser.user.getBlockedUsers() != null &&
+                    if (currentUser.user.getBlockedUsers().size() > 0 &&
                             currentUser.user.getBlockedUsers().contains(list.get(i).getSender().getUsername())) {
                         blockButton.setVisible(false);
                         unblockButton.setVisible(true);
                         break;
                     }
-                    if (currentUser.user.getBlockedUsers() == null || i == list.size() - 1) {
+                    if (currentUser.user.getBlockedUsers().size() == 0 || i == list.size() - 1) {
                         blockButton.setVisible(true);
                         unblockButton.setVisible(false);
                         break;
@@ -224,6 +231,8 @@ public class EmailsController {
     }
 
     public void changeList(MouseEvent actionEvent) {
+        searchBar.setText("");
+
         //do nothing and toggle the button back on if it's the current list being viewed
         if (!inboxButton.isSelected() && !sentButton.isSelected() && !outboxButton.isSelected()) {
             ((ToggleButton) actionEvent.getSource()).setSelected(true);
@@ -377,6 +386,7 @@ public class EmailsController {
         outboxList = new ArrayList<>();
         serverError = false;
         currentListType = null;
+        profilePicture = null;
         currentUser.user = null;
         updaterThread.join();
         inboxList = null;

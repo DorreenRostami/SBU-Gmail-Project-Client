@@ -18,7 +18,7 @@ public class User implements Serializable, Person {
     private String mobile;
 
     //messaging info
-    private transient List<String> blockedUsers = new ArrayList<>();
+    private List<String> blockedUsers = new ArrayList<>();
 
     public User(String username, String password) {
         this.username = username;

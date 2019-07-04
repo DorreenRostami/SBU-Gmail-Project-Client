@@ -54,11 +54,11 @@ public class ConversationListItemController {
         }
 
         textLabel.setText(conversation.getText());
-//        timeText.setText(conversation.getTime());
+        timeText.setText(conversation.getTime());
         return root;
     }
 
-    public void delete(MouseEvent mouseEvent) throws IOException {
+    public void deleteConversation() throws IOException {
         EmailsController.sentList.remove(conversation);
         EmailsController.inboxList.remove(conversation);
         new MailUpdater().start();
@@ -83,9 +83,11 @@ public class ConversationListItemController {
 
     private void updateConv() throws IOException {
         int i = EmailsController.sentList.indexOf(conversation);
-        EmailsController.sentList.set(i, conversation);
+        if (i > 0)
+            EmailsController.sentList.set(i, conversation);
         i = EmailsController.inboxList.indexOf(conversation);
-        EmailsController.inboxList.set(i, conversation);
+        if (i > 0)
+            EmailsController.inboxList.set(i, conversation);
         new MailUpdater().start();
         new PageLoader().load("/Emails.fxml");
     }

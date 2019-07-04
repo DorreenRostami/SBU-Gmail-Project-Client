@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Text;
 import model.*;
 
 import java.io.ByteArrayInputStream;
@@ -35,6 +36,8 @@ public class MessageListItemController {
     public Button downloadButton;
     @FXML
     public ImageView senderImage;
+    @FXML
+    public Text timeText;
 
     public MessageListItemController(Email message) throws IOException {
         this.message = message;
@@ -90,10 +93,11 @@ public class MessageListItemController {
             pathsTextArea.setVisible(false);
         }
         messageText.setEditable(false);
+        timeText.setText(message.getTime());
         return root;
     }
 
-    public void download(ActionEvent actionEvent) throws IOException {
+    public void download() throws IOException {
         for (FileInfo fileInfo : message.getFilesInfos()) {
             File newFile = new File(DOWNLOAD_PATH + fileInfo.getFileName());
             if (newFile.exists()) {
@@ -107,6 +111,8 @@ public class MessageListItemController {
             filesPaths.append(newFile.getPath()).append("\n");
             FileOutputStream os = new FileOutputStream(newFile);
             os.write(fileInfo.getFileBytes());
+            os.flush();
+            os.close();
         }
         downloadButton.setVisible(false);
         pathsTextArea.setText(filesPaths.toString());
