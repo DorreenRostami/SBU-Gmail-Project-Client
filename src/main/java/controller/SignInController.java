@@ -41,7 +41,7 @@ public class SignInController {
                 wrongLabel.setVisible(true);
         }
         else if (actionEvent.getSource() == newAccountHyperlink)
-            new PageLoader().load("/newAccount.fxml");
+            new PageLoader().load("/NewAccount.fxml");
     }
 
     private void playTransitions(){

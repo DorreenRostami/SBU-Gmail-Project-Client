@@ -20,8 +20,8 @@
 
 <AnchorPane minHeight="200.0" minWidth="600.0" prefHeight="700.0" prefWidth="900.0" style="-fx-background-color: #e1f7ef;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.EmailsController">
    <children>
-      <ListView fx:id="convosListView" layoutX="230.0" layoutY="100.0" onMouseClicked="#select" prefHeight="570.0" prefWidth="630.0" style="-fx-border-color: grey;" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="100.0" />
-      <ListView fx:id="messagesListView" layoutX="230.0" layoutY="160.0" onMouseClicked="#select" prefHeight="510.0" prefWidth="630.0" style="-fx-border-color: grey;" visible="false" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="160.0" />
+      <ListView fx:id="convosListView" layoutX="230.0" layoutY="100.0" onMouseClicked="#select" prefHeight="510.0" prefWidth="630.0" style="-fx-border-color: grey;" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="160.0" />
+      <ListView fx:id="messagesListView" layoutX="230.0" layoutY="160.0" onMouseClicked="#select" prefHeight="510.0" prefWidth="630.0" style="-fx-border-color: grey;" visible="false" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="160.0" />
       <VBox layoutX="14.0" layoutY="241.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="100.0">
          <children>
             <ToggleButton fx:id="composeButton" mnemonicParsing="false" onMouseClicked="#compose" prefHeight="60.0" prefWidth="200.0" style="-fx-border-color: grey; -fx-border-radius: 0;" text="Compose">
@@ -73,7 +73,7 @@
             <Font size="14.0" />
          </font>
       </Text>
-      <AnchorPane fx:id="conversationMessagesPane" layoutX="230.0" layoutY="100.0" prefHeight="60.0" prefWidth="630.0" style="-fx-background-color: black; -fx-border-color: grey;" visible="false">
+      <AnchorPane fx:id="blackPane" layoutX="230.0" layoutY="100.0" prefHeight="60.0" prefWidth="630.0" style="-fx-background-color: black; -fx-border-color: grey;" visible="false" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="100.0">
          <children>
             <Button fx:id="backToConvButton" layoutX="14.0" layoutY="18.0" mnemonicParsing="false" onAction="#backToConvList" text="Back" />
             <Label fx:id="subjectLabel" layoutX="75.0" layoutY="16.0" prefHeight="27.0" prefWidth="266.0" text="Subject" textFill="WHITE" underline="true">
@@ -92,7 +92,7 @@
             <Image url="@appImages/avatar.png" />
          </image>
       </ImageView>
-      <ImageView fx:id="settingsIcon" fitHeight="30.0" fitWidth="30.0" layoutX="750.0" layoutY="34.0" onMouseClicked="#goToSettings" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="34.0">
+      <ImageView fx:id="settingsIcon" fitHeight="30.0" fitWidth="30.0" layoutX="750.0" layoutY="34.0" onMouseClicked="#goToSettings" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="25.0">
          <image>
             <Image url="@appImages/settingIcon.png" />
          </image>
@@ -108,6 +108,17 @@
       <ImageView fx:id="refreshIcon" fitHeight="26.0" fitWidth="30.0" layoutX="83.0" layoutY="14.0" onMouseClicked="#refresh" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="83.0" AnchorPane.topAnchor="14.0">
          <image>
             <Image url="@appImages/refresh.png" />
+         </image>
+      </ImageView>
+      <AnchorPane fx:id="whitePane" layoutX="230.0" layoutY="100.0" prefHeight="60.0" prefWidth="630.0" style="-fx-background-color: white; -fx-border-color: grey;" AnchorPane.leftAnchor="230.0" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="100.0">
+         <children>
+            <RadioButton fx:id="latestFirst" layoutX="14.0" layoutY="10.0" mnemonicParsing="false" onAction="#arrange" selected="true" text="Latest First" />
+            <RadioButton fx:id="unreadFirst" layoutX="14.0" layoutY="35.0" mnemonicParsing="false" onAction="#arrange" text="Unread First" />
+         </children>
+      </AnchorPane>
+      <ImageView fx:id="blockIcon" fitHeight="30.0" fitWidth="30.0" layoutX="760.0" layoutY="66.0" onMouseClicked="#goToBlockedList" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="60.0">
+         <image>
+            <Image url="@appImages/blocked.png" />
          </image>
       </ImageView>
    </children>

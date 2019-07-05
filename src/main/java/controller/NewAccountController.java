@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
-public class newAccountController {
+public class NewAccountController {
     @FXML
     public TextField firstNameTextField, lastNameTextField, usernameTextField,
             dayTextField, monthTextField, yearTextField;

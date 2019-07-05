@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Connection {
-    private static final int requestPort = 8080;
-    private static final String serverIP = "localhost";
+    public static final int requestPort = 8080;
+    public static String serverIP = "localhost";
 
     private Socket socket;
     private ObjectOutputStream out;

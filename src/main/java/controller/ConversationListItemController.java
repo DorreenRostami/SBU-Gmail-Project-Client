@@ -36,12 +36,10 @@ public class ConversationListItemController {
     public AnchorPane init() throws IOException {
         starterName.setText(conversation.getSender().getUsername() + "@googlemail.com");
 
-        if (conversation.getSender().getImage() != null) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(conversation.getSender().getImage());
-            Image im = new Image(bis);
-            bis.close();
-            senderImage.setImage(im);
-        }
+        ByteArrayInputStream bis = new ByteArrayInputStream(conversation.getSender().getImage());
+        Image im = new Image(bis);
+        bis.close();
+        senderImage.setImage(im);
         senderImage.setClip(new Circle(30, 30, 30));
 
         for (Email msg : conversation.getMessages()) {

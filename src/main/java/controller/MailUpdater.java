@@ -3,7 +3,6 @@ package controller;
 import javafx.concurrent.Task;
 import model.Connection;
 import model.MessageType;
-import model.PageLoader;
 
 import java.io.IOException;
 
@@ -15,9 +14,9 @@ public class MailUpdater extends Thread {
             protected Void call() {
                 try {
                     Connection c = new Connection();
-                    if (EmailsController.inboxList != null)
+                    if (EmailsController.inboxList != null && EmailsController.inboxList.size() > 0)
                         c.saveListChanges(MessageType.updateInbox, EmailsController.inboxList);
-                    if (EmailsController.sentList != null)
+                    if (EmailsController.sentList != null && EmailsController.sentList.size() > 0)
                         c.saveListChanges(MessageType.updateSent, EmailsController.sentList);
                 }
                 catch (IOException e) {

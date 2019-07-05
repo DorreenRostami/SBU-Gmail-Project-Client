@@ -16,11 +16,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class MessageListItemController {
-    private static final String NO_PHOTO = "src/main/resources/appImages/avatar.png";
-    private static final String DOWNLOAD_PATH= "resources/downloads/";
+    private static final String DOWNLOAD_PATH = "resources/downloads/";
     private StringBuilder filesPaths = new StringBuilder();
     private Email message;
 
@@ -47,20 +45,21 @@ public class MessageListItemController {
     public AnchorPane init() throws IOException {
         senderName.setText(message.getSender().getUsername() + "@googlemail.com");
         receiverName.setText(message.getReceiver() + "@googlemail.com");
-        if (message.getSender().getImage() != null) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(message.getSender().getImage());
-            Image im = new Image(bis);
-            bis.close();
-            senderImage.setImage(im);
-        }
-        else
-            senderImage.setImage(new Image(Paths.get(NO_PHOTO).toUri().toString()));
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(message.getSender().getImage());
+        Image im = new Image(bis);
+        bis.close();
+        senderImage.setImage(im);
         senderImage.setClip(new Circle(30, 30, 30));
 
         if (message.isImp())
             imp.setSelected(true);
+        else
+            imp.setSelected(false);
         if (message.isRead())
             unread.setSelected(false);
+        else
+            unread.setSelected(true);
         messageText.setText(message.getText());
         if (message.getFilesInfos() != null) {
             File dir = new File("resources/downloads");

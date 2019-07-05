@@ -58,7 +58,15 @@ public class AdditionalInfoController {
         }
     }
 
-    public void changePage() {
+    public void changePage() throws IOException {
+        if (currentUser.user.getImage() == null) {
+            BufferedImage bImage = ImageIO.read(new File("src/main/resources/appImages/avatar.png"));
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(bImage, "png", bos);
+            byte [] data = bos.toByteArray();
+            bos.close();
+            currentUser.user.setImage(data);
+        }
         if (mobileTextField.getText().length() != 0) {
             currentUser.user.setMobile(mobileTextField.getText());
         }

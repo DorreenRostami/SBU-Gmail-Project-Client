@@ -46,9 +46,9 @@ public class EmailsController {
     @FXML public Text sizeWarning, serverErrorText;
     @FXML public Button sendButton, sendButton1, cancelButton, attachButton,
             searchButton, replyButton, blockButton, unblockButton;
-    @FXML public AnchorPane conversationMessagesPane;
+    @FXML public AnchorPane blackPane, whitePane;
     @FXML public ImageView currentProfilePicture, settingsIcon, refreshIcon;
-    @FXML public RadioButton searchByUser, searchBySubject;
+    @FXML public RadioButton searchByUser, searchBySubject, latestFirst, unreadFirst;
     @FXML public Label subjectLabel;
 
     /**
@@ -81,7 +81,7 @@ public class EmailsController {
 
         calculate();
 
-        if (currentUser.user.getImage() != null && profilePicture == null) {
+        if (profilePicture == null) {
             ByteArrayInputStream bis = new ByteArrayInputStream(currentUser.user.getImage());
             profilePicture = new Image(bis);
             currentProfilePicture.setImage(profilePicture);
@@ -91,7 +91,7 @@ public class EmailsController {
             catch (IOException e) {
                 e.getMessage();
             }
-        } else if (profilePicture != null) {
+        } else {
             currentProfilePicture.setImage(profilePicture);
         }
         currentProfilePicture.setClip(new Circle(40, 40, 40));
@@ -158,7 +158,10 @@ public class EmailsController {
         convosListView.setDisable(false);
         messagesListView.setVisible(false);
         messagesListView.setDisable(true);
-        conversationMessagesPane.setVisible(false);
+        blackPane.setVisible(false);
+        whitePane.setVisible(true);
+        latestFirst.setVisible(true);
+        unreadFirst.setVisible(true);
         if (list == null || list.size() == 0) {
             convosListView.getItems().clear();
             convosListView.setPlaceholder(new Label("No Conversation"));
@@ -176,8 +179,16 @@ public class EmailsController {
         convosListView.setDisable(true);
         messagesListView.setVisible(true);
         messagesListView.setDisable(false);
-        if (currentListType != ListType.outbox)
-            conversationMessagesPane.setVisible(true);
+        if (currentListType != ListType.outbox) {
+            blackPane.setVisible(true);
+            whitePane.setVisible(false);
+        }
+        else {
+            whitePane.setVisible(true);
+            blackPane.setVisible(false);
+            latestFirst.setVisible(false);
+            unreadFirst.setVisible(false);
+        }
         if (list == null || list.size() == 0) {
             messagesListView.getItems().clear();
             messagesListView.setPlaceholder(new Label("No Messages"));
@@ -218,15 +229,17 @@ public class EmailsController {
         else
             currentListType = ListType.sentConv;
         for (Email e : selectedConv.getMessages()) {
-            e.setRead(true);
+            if (!e.isRead()) {
+                e.setRead(true);
+                int i = EmailsController.sentList.indexOf(selectedConv);
+                if (i > 0)
+                    EmailsController.sentList.set(i, selectedConv);
+                i = EmailsController.inboxList.indexOf(selectedConv);
+                if (i > 0)
+                    EmailsController.inboxList.set(i, selectedConv);
+                new MailUpdater().start();
+            }
         }
-        int i = EmailsController.sentList.indexOf(selectedConv);
-        if (i > 0)
-            EmailsController.sentList.set(i, selectedConv);
-        i = EmailsController.inboxList.indexOf(selectedConv);
-        if (i > 0)
-            EmailsController.inboxList.set(i, selectedConv);
-        new MailUpdater().start();
         new PageLoader().load("/Emails.fxml");
     }
 
@@ -238,17 +251,21 @@ public class EmailsController {
             ((ToggleButton) actionEvent.getSource()).setSelected(true);
             return;
         }
-        //changeInfo the list
+        //change the list
         if (actionEvent.getSource() == inboxButton) {
             sentButton.setSelected(false);
             outboxButton.setSelected(false);
             currentListType = ListType.inbox;
+            latestFirst.setSelected(true);
+            unreadFirst.setSelected(false);
             showConversationList(inboxList);
         }
         else if (actionEvent.getSource() == sentButton) {
             inboxButton.setSelected(false);
             outboxButton.setSelected(false);
             currentListType = ListType.sent;
+            latestFirst.setSelected(true);
+            unreadFirst.setSelected(false);
             showConversationList(sentList);
         }
         else if (actionEvent.getSource() == outboxButton) {
@@ -256,6 +273,30 @@ public class EmailsController {
             inboxButton.setSelected(false);
             sentButton.setSelected(false);
             showMessageList(outboxList);
+        }
+    }
+
+    public void arrange(ActionEvent actionEvent) {
+        if (!unreadFirst.isSelected() && !latestFirst.isSelected()) {
+            ((RadioButton) actionEvent.getSource()).setSelected(true);
+            return;
+        }
+
+        if (actionEvent.getSource() == latestFirst) {
+            unreadFirst.setSelected(false);
+            if (currentListType == ListType.inbox)
+                showConversationList(inboxList);
+            else
+                showConversationList(sentList);
+        }
+        else {
+            latestFirst.setSelected(false);
+            if (currentListType == ListType.inbox) {
+                showConversationList(ListArranger.arrangeByUnread(inboxList));
+            }
+            else {
+                showConversationList(ListArranger.arrangeByUnread(sentList));
+            }
         }
     }
 
@@ -302,13 +343,9 @@ public class EmailsController {
         compose();
         sendButton.setVisible(false);
         sendButton1.setVisible(true);
-        String receiver = "";
-        for (Email e : selectedConv.getMessages()) {
-            if (!e.getSender().equals(currentUser.user)) {
-                receiver = e.getSender().getUsername();
-                break;
-            }
-        }
+        Email first = selectedConv.getMessages().get(0);
+        String receiver = first.getSender().getUsername().equals(currentUser.user.getUsername()) ?
+                first.getReceiver() : first.getSender().getUsername();
         receiverTextField.setText(receiver);
         receiverTextField.setEditable(false);
         subjectTextField.setText(selectedConv.getMessages().get(0).getSubject());
@@ -369,7 +406,8 @@ public class EmailsController {
     private void forwardMessage() {
         compose();
         subjectTextField.setText(forwardedMessage.getSubject());
-        textArea.setText(forwardedMessage.getText());
+        textArea.setText("Forwarded message from: " + forwardedMessage.getSender().getUsername() + "@googlemail.com\n" +
+                forwardedMessage.getText());
         StringBuilder filesNames = new StringBuilder();
         if (forwardedMessage.getFilesInfos() != null) {
             for (FileInfo fileInfo : forwardedMessage.getFilesInfos())
@@ -487,6 +525,11 @@ public class EmailsController {
             serverError = true;
             showServerError();
         }
+    }
+
+
+    public void goToBlockedList(MouseEvent mouseEvent) throws IOException {
+        new PageLoader().load("/BlockedUsersList.fxml");
     }
 }
 

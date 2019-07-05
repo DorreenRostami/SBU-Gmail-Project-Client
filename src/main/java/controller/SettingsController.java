@@ -53,16 +53,15 @@ public class SettingsController {
         });
 
         choiceBox.getItems().addAll(Gender.Male, Gender.Female);
-        if (currentUser.user.getImage() != null) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(chosenImage);
-            Image im = new Image(bis);
-            profilePicture.setImage(im);
-            try {
-                bis.close();
-            }
-            catch (IOException e) {
-                e.getMessage();
-            }
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(chosenImage);
+        Image im = new Image(bis);
+        profilePicture.setImage(im);
+        try {
+            bis.close();
+        }
+        catch (IOException e) {
+            e.getMessage();
         }
 
         String[] bday = currentUser.user.getBirthday().split("/");
@@ -81,8 +80,6 @@ public class SettingsController {
             new PageLoader().load("/Emails.fxml");
         else if (actionEvent.getSource() == saveButton) {
             resetWarnings();
-            System.out.println(currentUser.user.getPassword());
-            System.out.println(oldPasswordField.getText());
             if (oldPasswordField.getText().length() > 0 && !currentUser.user.getPassword().equals(oldPasswordField.getText())){
                 wrongPassWarning.setVisible(true);
                 return;
@@ -97,7 +94,8 @@ public class SettingsController {
             user.setGender(choiceBox.getValue());
             user.setMobile(mobileTextField.getText());
             user.setImage(chosenImage);
-            List<InfoFeedback> feedback = new Connection().settingsConnection(user, "changed-" + newPasswordField2.getText());
+            String pass2 = oldPasswordField.getText().length() > 0 ? "changed-" + newPasswordField2.getText() : "";
+            List<InfoFeedback> feedback = new Connection().settingsConnection(user, pass2);
             if (feedback.contains(InfoFeedback.changed)) {
                 currentUser.user = user;
                 new PageLoader().load("/Emails.fxml");
